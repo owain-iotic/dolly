@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hackathon mapping</title>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIwzALxUPNbatRBj3Xi1Uhp0fFzwWNBkE&callback=initMap&libraries=&v=weekly"
+      defer></script>
+
+<script>
+function init() {
+		const map = new google.maps.Map(document.getElementById("map"), {
+		  zoom: 9,
+		  center: { lat: 52.179413, lng: 0.919274 },
+		  mapTypeId: "terrain",
+		});
+
+	lat = 52.214016
+	lon = 0.964676
+
+		var marker = new google.maps.Marker({
+			map: map,
+			position: new google.maps.LatLng(lat, lon),
+			title: "Ship1"
+		});
+
+	setInterval(function() {
+		// Draw some bits...
+
+		lat += (Math.random() * .01) - .005
+		lon += (Math.random() * .01) - .005
+		var latlng = new google.maps.LatLng(lat, lon);
+		marker.setPosition(latlng)
+
+	}, 100)
+}
+</script>
+
+<style>
+/* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+#map {
+  height: 100%;
+}
+
+/* Optional: Makes the sample page fill the window. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+</style>
+  </head>
+  <body onload="init()">
+    <div id="map"></div>
+  </body>
+</html>
