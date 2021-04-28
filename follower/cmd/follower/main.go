@@ -21,14 +21,6 @@ const (
 	followerTwinId = "did:iotics:iotTmRTTzh9LGuqPNkZgjQ3Pj6w8fBfovxfJ"
 )
 
-var status_index = 0
-var statuses = []string{
-	"/",
-	"-",
-	"\\",
-	"|",
-}
-
 type shipdata struct {
 	lat  float64
 	lon  float64
@@ -44,12 +36,8 @@ func ShipServer(ws *websocket.Conn) {
 
 	for {
 		shipdata := <-updates
-		status_index++
-		if status_index == len(statuses) {
-			status_index = 0
-		}
 
-		status := fmt.Sprintf("IOTICS %s Epic OMG Ship Example Replaying %s", statuses[status_index], shipdata.when)
+		status := fmt.Sprintf("Replaying %s", shipdata.when)
 
 		data := fmt.Sprintf("%s,%f,%f,%s", shipdata.id+" "+shipdata.did, shipdata.lat, shipdata.lon, status)
 		fmt.Printf("SEND %s %s\n", shipdata.when, data)

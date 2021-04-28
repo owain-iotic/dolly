@@ -37,8 +37,8 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 
 	// First lets setup the map
 	const map = new google.maps.Map(document.getElementById("map"), {
-		zoom: 5,
-		center: { lat: 32.1611451, lng: -98.6034625 },
+		zoom: 4.5,
+		center: { lat: 32.1611451, lng: -102.6034625 },
 		mapTypeId: "roadmap",
 	});
 
@@ -70,12 +70,11 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 		console.log('Message from server ', event.data);
 
 		ids = id.split(" ")
+		shipid = ids[0]
 		did = ids[1]
 
 		if (typeof(ships[id])=='undefined') {
 			console.log("NEW SHIP! " + id + " " + iconi)
-
-			
 
 			var marker = new google.maps.Marker({
 				map: map,
@@ -85,6 +84,12 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 				icon: {url:icons[iconi], labelOrigin:new google.maps.Point(0,44)}
 			});
 			ships[id] = marker
+
+			// Add it to the list...
+			html = document.getElementById("shipdetails").innerHTML
+			html = html + "<img width='32' height='20' src='" + icons[iconi] + "'> <span style='font-family:monospace;font-size:8px;color:#444' id='shipidi_" + shipid + "'>" + did + "</span> <span style='font-family:monospace;font-size:8px;color:#008'>" + shipid + "</span><br>"
+			document.getElementById("shipdetails").innerHTML = html
+
 			iconi = (iconi+1) % icons.length
 		} else {
 			marker = ships[id]
@@ -93,11 +98,13 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 			// Show it's moving...
 
 			marker.setLabel({text:did, fontFamily:"monospace", fontSize:"8px", color:"#ff4444"})
-			setTimeout(function(m, d) {
+			document.getElementById("shipidi_" + shipid).style.color = "#ff4444"
+			setTimeout(function(m, d, s) {
 				return function() {
 					m.setLabel({text:d, fontFamily:"monospace", fontSize:"8px", color:"#444444"})
+					document.getElementById("shipidi_" + s).style.color = "#444444"
 				}
-			}(marker, did), 200)
+			}(marker, did, shipid), 200)
 		}
 	});
 
@@ -148,9 +155,13 @@ body {
   <body>
     <div id="map"></div>
 
-	<div style="font-family:monospace; color:#444444 ;padding:8px;position:absolute;top:10px;left:240px;background-color:#dddddd;border:2px solid black;">
-		<img style="color:white" src="iotics-dark-logo.png" height="45" width="145" alt="iotics">
-		<span id="status">Loading . . .</span></div>
+	<div style="font-family:monospace; color:#444444 ;padding:8px;position:absolute;top:70px;left:10px;background-color:#dddddd;border:2px solid black;opacity:75%">
+		<img style="color:white" src="iotics-dark-logo.png" height="45" width="145" alt="iotics"><br>
+		<span id="status">Loading . . .</span>
+		<hr>
+		<div id="shipdetails">
+		</div>
+	</div>
 
   </body>
 </html>
