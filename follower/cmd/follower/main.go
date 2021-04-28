@@ -21,10 +21,18 @@ type shipdata struct {
 
 var ships = make(map[string]*shipdata)
 
+var status_index = 0
+var statuses = []string{
+	"/",
+	"-",
+	"\\",
+	"|",
+}
+
 func ShipServer(ws *websocket.Conn) {
 
 	// Read the data from file...
-	file, err := os.Open("first6.csv")
+	file, err := os.Open("ship_data.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,13 +51,18 @@ func ShipServer(ws *websocket.Conn) {
 
 		// Send an update...
 
-		status := fmt.Sprintf("IOTICS Epic OMG Ship Example Replaying %s", timestamp)
+		status_index++
+		if status_index == len(statuses) {
+			status_index = 0
+		}
+
+		status := fmt.Sprintf("IOTICS %s Epic OMG Ship Example Replaying %s", statuses[status_index], timestamp)
 
 		data := fmt.Sprintf("%s,%f,%f,%s", id, lat, lon, status)
 		fmt.Printf("SEND %s %s\n", timestamp, data)
 		ws.Write([]byte(data))
 
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 	/*
 		for {

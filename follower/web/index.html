@@ -27,7 +27,7 @@ scale: 0.5
 	const map = new google.maps.Map(document.getElementById("map"), {
 		zoom: 5,
 		center: { lat: 32.1611451, lng: -98.6034625 },
-		mapTypeId: "terrain",
+		mapTypeId: "roadmap",
 	});
 
 	// Now listen on a websocket for events...
@@ -63,6 +63,7 @@ scale: 0.5
 				map: map,
 				position: new google.maps.LatLng(lat, lon),
 				title: "Ship " + id,
+				label: id,
 				icon: icon
 			});
 			ships[id] = marker
@@ -120,8 +121,9 @@ body {
   <body>
     <div id="map"></div>
 
-
-	<div id="status" style="padding:8px;position:absolute;top:12px;left:240px;background-color:aliceblue;border:2px solid black;">TESTING</div>
+	<div style="font-family:monospace; color:#004400 ;padding:8px;position:absolute;top:10px;left:240px;background-color:#ddffdd;border:2px solid black;">
+		<img style="color:white" src="iotics-dark-logo.png" height="45" width="145" alt="iotics">
+		<span id="status">Loading . . .</span></div>
 
   </body>
 </html>
