@@ -20,13 +20,13 @@ fillColor: '#444444',
 fillOpacity: .6,
 anchor: new google.maps.Point(0,0),
 strokeWeight: 0,
-scale: 1
+scale: 0.5
 }
 
 	// First lets setup the map
 	const map = new google.maps.Map(document.getElementById("map"), {
 		zoom: 5,
-		center: { lat: 52.179413, lng: 0.919274 },
+		center: { lat: 32.1611451, lng: -98.6034625 },
 		mapTypeId: "terrain",
 	});
 
@@ -43,7 +43,7 @@ scale: 1
 	socket.addEventListener('message', function (event) {
 
 		// Do an update...
-		bits = event.data.split(" ")
+		bits = event.data.split(",")
 		// ID lat lon
 		id = bits[0]
 		lat = bits[1]

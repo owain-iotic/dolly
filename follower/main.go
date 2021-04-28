@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/net/websocket"
@@ -19,25 +23,52 @@ var ships = make(map[string]*shipdata)
 
 func ShipServer(ws *websocket.Conn) {
 
-	for {
-		// Send all ships...
-		for id, ship := range ships {
-			data := fmt.Sprintf("%s %f %f", id, ship.lat, ship.lon)
-			fmt.Printf("SEND %s\n", data)
-			ws.Write([]byte(data))
-		}
-
-		// Move all ships...
-		MAX_MVT := .1
-		for _, ship := range ships {
-			ship.lat += rand.Float64()*MAX_MVT - rand.Float64()*MAX_MVT
-			ship.lon += rand.Float64()*MAX_MVT - rand.Float64()*MAX_MVT
-
-		}
-
-		fmt.Printf("Waiting...")
-		time.Sleep(1 * time.Second)
+	// Read the data from file...
+	file, err := os.Open("first6.csv")
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		csvline := scanner.Text()
+		// Split it
+		bits := strings.Split(csvline, ",")
+		// MMSI,BaseDateTime,LAT,LON,SOG,COG,Heading,VesselName,IMO,CallSign,VesselType,Status,Length,Width,Draft,Cargo,TranscieverClass
+		lat, _ := strconv.ParseFloat(bits[2], 64)
+		lon, _ := strconv.ParseFloat(bits[3], 64)
+		id := bits[9]
+
+		// Send an update...
+
+		data := fmt.Sprintf("%s,%f,%f", id, lat, lon)
+		fmt.Printf("SEND %s\n", data)
+		ws.Write([]byte(data))
+
+		time.Sleep(10 * time.Millisecond)
+	}
+	/*
+		for {
+			// Send all ships...
+			for id, ship := range ships {
+				data := fmt.Sprintf("%s %f %f", id, ship.lat, ship.lon)
+				fmt.Printf("SEND %s\n", data)
+				ws.Write([]byte(data))
+			}
+
+			// Move all ships...
+			MAX_MVT := .1
+			for _, ship := range ships {
+				ship.lat += rand.Float64()*MAX_MVT - rand.Float64()*MAX_MVT
+				ship.lon += rand.Float64()*MAX_MVT - rand.Float64()*MAX_MVT
+
+			}
+
+			fmt.Printf("Waiting...")
+			time.Sleep(1 * time.Second)
+		}
+	*/
 }
 
 func main() {
