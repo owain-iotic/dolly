@@ -7,13 +7,36 @@
       defer></script>
 
 <script>
-function initMap() {
-		const map = new google.maps.Map(document.getElementById("map"), {
-		  zoom: 9,
-		  center: { lat: 52.179413, lng: 0.919274 },
-		  mapTypeId: "terrain",
-		});
 
+function initMap() {
+
+	// First lets setup the map
+	const map = new google.maps.Map(document.getElementById("map"), {
+		zoom: 9,
+		center: { lat: 52.179413, lng: 0.919274 },
+		mapTypeId: "terrain",
+	});
+
+	// Now listen on a websocket for events...
+
+	socket = new WebSocket("ws://localhost:3000/ws")
+
+	// Connection opened
+	socket.addEventListener('open', function (event) {
+		socket.send('Hello Server!');
+	});
+
+	// Listen for messages
+	socket.addEventListener('message', function (event) {
+		console.log('Message from server ', event.data);
+	});
+
+	// Connection closed
+	socket.addEventListener('close', function (event) {
+		socket.send('Bye Server!');
+	});
+
+	/*
 	lat = 52.214016
 	lon = 0.964676
 
@@ -32,6 +55,7 @@ function initMap() {
 		marker.setPosition(latlng)
 
 	}, 100)
+	*/
 }
 </script>
 
