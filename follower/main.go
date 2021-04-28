@@ -39,11 +39,14 @@ func ShipServer(ws *websocket.Conn) {
 		lat, _ := strconv.ParseFloat(bits[2], 64)
 		lon, _ := strconv.ParseFloat(bits[3], 64)
 		id := bits[9]
+		timestamp := bits[1]
 
 		// Send an update...
 
-		data := fmt.Sprintf("%s,%f,%f", id, lat, lon)
-		fmt.Printf("SEND %s\n", data)
+		status := fmt.Sprintf("IOTICS Epic OMG Ship Example Replaying %s", timestamp)
+
+		data := fmt.Sprintf("%s,%f,%f,%s", id, lat, lon, status)
+		fmt.Printf("SEND %s %s\n", timestamp, data)
 		ws.Write([]byte(data))
 
 		time.Sleep(10 * time.Millisecond)
