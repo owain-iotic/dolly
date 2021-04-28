@@ -28,7 +28,7 @@ func ShipServer(ws *websocket.Conn) {
 		}
 
 		// Move all ships...
-		MAX_MVT := .02
+		MAX_MVT := .1
 		for _, ship := range ships {
 			ship.lat += rand.Float64()*MAX_MVT - rand.Float64()*MAX_MVT
 			ship.lon += rand.Float64()*MAX_MVT - rand.Float64()*MAX_MVT
@@ -46,13 +46,14 @@ func main() {
 	lon := 0.964676
 
 	NUM_SHIPS := 12
+	MAX_V := 6.0
 
 	for i := 0; i < NUM_SHIPS; i++ {
 		// Create some lat/lon
 		id := fmt.Sprintf("sh%d", i)
 		ships[id] = &shipdata{
-			lat: lat + rand.Float64()*.1 - rand.Float64()*.1,
-			lon: lon + rand.Float64()*.1 - rand.Float64()*.1,
+			lat: lat + rand.Float64()*MAX_V - rand.Float64()*MAX_V,
+			lon: lon + rand.Float64()*MAX_V - rand.Float64()*MAX_V,
 		}
 	}
 
