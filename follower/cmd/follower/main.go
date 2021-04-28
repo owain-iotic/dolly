@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/owain-iotic/dolly/follower/client"
+	"github.com/owain-iotic/dolly/follower/common"
 	"golang.org/x/net/websocket"
 )
 
@@ -27,21 +27,6 @@ var statuses = []string{
 	"-",
 	"\\",
 	"|",
-}
-
-var shiptwins = map[string]string{
-	"3FHS3":   "did:iotics:iotQYhr2yNaMoAT16uuhKRDR5yUoLMVjQ8jw",
-	"3FMK3":   "did:iotics:iotT94QxhtDvaw4gzd1qhymbNcjG3CwCwbtr",
-	"9HA3481": "did:iotics:iotUSE8zLAo5VnqXar5WM8VnVE9TjVKVnEGL",
-	"9VPY3":   "did:iotics:iotFLjrTjAVFnxnBBmzLkd2VqEc9EPg9kXtc",
-	"C6FX6":   "did:iotics:iotStFerXzr6FNVjtk4KFVpwzMszd6fCpSWD",
-	"C6QM8":   "did:iotics:iotMEe8p4de64aSGsnC7cDtfkdMek2fpFGUP",
-	"C6WW7":   "did:iotics:iotEr28AzvJ9XijVrJTUQC6fM4DqbKxgpsAk",
-	"D5MJ2":   "did:iotics:iotJ81ZqgWDeYUpy6yV3UtC81wuaK62AyDC3",
-	"D5WA5":   "did:iotics:iotNtKY6kpdWoDCymGBon85eUE1NFKqtE7wt",
-	"KEBO":    "did:iotics:iotSdaaoRwX5WX9RC8u3KBQsBX7xrSs6bEJf",
-	"LAHY6":   "did:iotics:iotDLBijG1znV7B5XBMz2rA17UyKpgy2KcG5",
-	"VRGA3":   "did:iotics:iotJUa9oH6rYdc1jZpZfKJuxmuZQcsGBUgzF",
 }
 
 type shipdata struct {
@@ -66,15 +51,14 @@ func ShipServer(ws *websocket.Conn) {
 
 		status := fmt.Sprintf("IOTICS %s Epic OMG Ship Example Replaying %s", statuses[status_index], shipdata.when)
 
-		data := fmt.Sprintf("%s,%f,%f,%s", shipdata.id+"-"+shipdata.did, shipdata.lat, shipdata.lon, status)
+		data := fmt.Sprintf("%s,%f,%f,%s", shipdata.id+" "+shipdata.did, shipdata.lat, shipdata.lon, status)
 		fmt.Printf("SEND %s %s\n", shipdata.when, data)
 		ws.Write([]byte(data))
-
-		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 func main() {
+	common.LoadShipConfig("selected_ships.txt", "twins.txt")
 
 	scheme := "ws"
 	if ssl {
@@ -85,16 +69,23 @@ func main() {
 
 	cli := client.NewIoticsStompClient()
 
-	cli.Connect(url, authToken)
+	err := cli.Connect(url, authToken)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Stomp connected\n")
 
 	// Subscribe to the twins...
-	for id, did := range shiptwins {
+	for id, did := range common.Shiptwins {
 		dest := fmt.Sprintf("/qapi/twins/%s/interests/twins/%s/feeds/%s", followerTwinId, did, "shiplocation")
 
 		ch, err := cli.Subscribe(dest)
 		if err != nil {
 			panic(err)
 		}
+
+		fmt.Printf("Subscribed to %s\n", dest)
 
 		go func(myid string, mydid string) {
 			for {
@@ -149,7 +140,7 @@ func main() {
 	http.Handle("/ws", websocket.Handler(ShipServer))
 
 	log.Println("Listening on :3000...")
-	err := http.ListenAndServe(":3000", nil)
+	err = http.ListenAndServe(":3000", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
