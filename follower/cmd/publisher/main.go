@@ -96,7 +96,7 @@ func main() {
 			panic("Don't have a twin for this ship")
 		}
 
-		s := fmt.Sprintf("{\"lat\": %f, \"lon\":%f}", lat, lon)
+		s := fmt.Sprintf("{\"lat\": %f, \"lon\":%f, \"when\":\"%s\"}", lat, lon, timestamp)
 		b64val := base64.StdEncoding.EncodeToString([]byte(s))
 		data := fmt.Sprintf("{\"sample\": {\"data\": \"%s\", \"mime\": \"application/json\", \"occurredAt\": \"%s\"}}", b64val, time.Now().Format(time.RFC3339Nano))
 
