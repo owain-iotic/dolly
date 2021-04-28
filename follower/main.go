@@ -1,11 +1,20 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net/http"
 )
 
 func main() {
 
-	fmt.Println("TODO: Start webserver, follow twins, funnel data over a ws to frontend")
+	log.Println("Starting webserver")
+	// Serve static files...
+	fs := http.FileServer(http.Dir("./web"))
+	http.Handle("/", fs)
 
+	log.Println("Listening on :3000...")
+	err := http.ListenAndServe(":3000", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

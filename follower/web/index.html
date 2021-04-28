@@ -3,11 +3,11 @@
   <head>
     <title>Hackathon mapping</title>
     <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIwzALxUPNbatRBj3Xi1Uhp0fFzwWNBkE&callback=initMap&libraries=&v=weekly"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXGj48qODguMHJM9lPXyl_-iWUlhp-cxg&callback=initMap&libraries=&v=weekly"
       defer></script>
 
 <script>
-function init() {
+function initMap() {
 		const map = new google.maps.Map(document.getElementById("map"), {
 		  zoom: 9,
 		  center: { lat: 52.179413, lng: 0.919274 },
@@ -51,7 +51,7 @@ body {
 }
 </style>
   </head>
-  <body onload="init()">
+  <body>
     <div id="map"></div>
   </body>
 </html>
