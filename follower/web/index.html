@@ -8,6 +8,8 @@
 
 <script>
 
+var ships = {}		// ID->{marker}
+
 function initMap() {
 
 	// First lets setup the map
@@ -28,7 +30,28 @@ function initMap() {
 
 	// Listen for messages
 	socket.addEventListener('message', function (event) {
+
+		// Do an update...
+		bits = event.data.split(" ")
+		// ID lat lon
+		id = bits[0]
+		lat = bits[1]
+		lon = bits[2]
 		console.log('Message from server ', event.data);
+
+		if (typeof(ships[id])=='undefined') {
+			console.log("NEW SHIP! " + id)
+			var marker = new google.maps.Marker({
+				map: map,
+				position: new google.maps.LatLng(lat, lon),
+				title: "Ship " + id
+			});
+			ships[id] = marker
+		} else {
+			marker = ships[id]
+			var latlng = new google.maps.LatLng(lat, lon);
+			marker.setPosition(latlng)
+		}
 	});
 
 	// Connection closed
