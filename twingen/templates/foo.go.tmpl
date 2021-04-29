@@ -195,7 +195,10 @@ type {{ .TwinName }} struct {
 	TwinDid  string
 	config   Config
 	did      *Did
-	FeedAis  FeedAis
+	{{range .Feeds}}
+	{{ .FeedStructName }} {{ .FeedStructName }} 
+	{{ end }}
+	
 }
 
 type Config struct {

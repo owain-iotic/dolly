@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"flag"
+
 )
 
 const (
@@ -189,10 +191,14 @@ func (t *Twinner) Generate() error {
 			switch v.DataType {
 			case "decimal":
 				i.GoDataType = "float32"
+			case "float":
+				i.GoDataType = "float32"
+			case "int":
+				i.GoDataType = "int"
 			case "integer":
 				i.GoDataType = "int"
 			case "string":
-				i.GoDataType = "int"
+				i.GoDataType = "string"
 			case "boolean":
 				i.GoDataType = "bool"
 			default:
@@ -254,10 +260,17 @@ func (t *Twinner) Generate() error {
 }
 
 func main() {
+	
+	twinidPtr := flag.String("twinid", "did:iotics:iotTtKdce1CKpUYQPb9AQ2TggDgesKmHD6aF", "did of twin to clone")
+    authPtr := flag.String("jwt", "ey....", "jwt")
+	hostPtr := flag.String("host", "plateng.iotics.space", "iotic host")
+    
+	flag.Parse()
+	
 	fmt.Println("Twingen starting...")
-	twinID := "did:iotics:iotTtKdce1CKpUYQPb9AQ2TggDgesKmHD6aF"
-	authToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk3MTE2ODAsImlhdCI6MTYxOTY5ODA4MCwiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.Sqikb8DBVTdXdz_n0MhWSYQUHuMETgDPGScqg3Hja66JmH-vAjiphU0aH_l0Xeeb7j6Xf_G2oFaRYZOUUSdRtQ"
-	httpClient := NewHttpClient("plateng.iotics.space", true, authToken, twinID)
+	twinID := *twinidPtr
+	authToken := *authPtr
+	httpClient := NewHttpClient(*hostPtr, true, authToken, twinID)
 
 	twinner := NewTwinner(twinID, authToken, &httpClient)
 	fmt.Printf("Loading twin %s...\n", twinID)

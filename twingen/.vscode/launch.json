@@ -9,7 +9,12 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}"
+            "program": "${workspaceFolder}",
+            "args": [
+                "-host=plateng.iotics.space",
+                "-twinid=did:iotics:iotQYhr2yNaMoAT16uuhKRDR5yUoLMVjQ8jw",
+                "-jwt=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk3MTE2ODAsImlhdCI6MTYxOTY5ODA4MCwiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.Sqikb8DBVTdXdz_n0MhWSYQUHuMETgDPGScqg3Hja66JmH-vAjiphU0aH_l0Xeeb7j6Xf_G2oFaRYZOUUSdRtQ"
+            ]
         }
     ]
 }
