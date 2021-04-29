@@ -12,6 +12,12 @@ var ships = {}		// ID->{marker}
 
 var icon
 
+function dismiss() {
+	dd = document.getElementById("details")
+			dd.style.visibility = "hidden"
+
+}
+
 function initMap() {
 
 icon = {
@@ -54,6 +60,30 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 	// Listen for messages
 	socket.addEventListener('message', function (event) {
 
+		if (event.data.startsWith("DESCRIBE ")) {
+			dr = event.data.substring(9, event.data.length)
+			console.log("Describe reply " + dr)
+			data = JSON.parse(dr)
+			// Now we can show bits of the json nicely...
+
+			dd = document.getElementById("details")
+			dd.style.visibility = "visible"
+
+			d = `
+			DID: ` + data.Twin.Id.Value + `<BR>
+			Visibility: ` + data.Twin.Visibility + `<BR>`
+			
+			feeds = data.Result.Feeds
+			for (i=0;i<feeds.length;i++) {
+				feed = feeds[i]
+				d = d + "Feed ID=" + feed.FeedId.Value + " storeLast=" + feed.StoreLast + "<br>"
+			}
+
+			d = d + `<br><button onclick="dismiss()">OK</button>`
+
+			dd.innerHTML = d
+		}
+
 		// Do an update...
 		bits = event.data.split(",")
 		// ID lat lon
@@ -84,6 +114,14 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 				icon: {url:icons[iconi], labelOrigin:new google.maps.Point(0,44)}
 			});
 			ships[id] = marker
+
+			marker.addListener("click", function(mydid) {
+				return function() {
+				// Ask for a describe...
+				socket.send("DESCRIBE " + did)
+				}
+  			}(did));
+
 
 			// Add it to the list...
 			html = document.getElementById("shipdetails").innerHTML
@@ -155,12 +193,15 @@ body {
   <body>
     <div id="map"></div>
 
-	<div style="font-family:monospace; color:#444444 ;padding:8px;position:absolute;top:70px;left:10px;background-color:#dddddd;border:2px solid black;opacity:75%">
+	<div style="font-family:monospace; color:#444444 ;padding:8px;position:absolute;top:70px;left:10px;background-color:#dddddd;border:2px solid black;opacity:75%;border-radius:8px">
 		<img style="color:white" src="iotics-dark-logo.png" height="45" width="145" alt="iotics"><br>
 		<span id="status">Loading . . .</span>
 		<hr>
 		<div id="shipdetails">
 		</div>
+	</div>
+
+	<div id="details" style="font-family:monospace; color:#444444 ;padding:8px;position:absolute;top:10px;left:400px;background-color:#dddddd;border:2px solid black;opacity:75%;border-radius:8px;visibility:hidden">
 	</div>
 
   </body>

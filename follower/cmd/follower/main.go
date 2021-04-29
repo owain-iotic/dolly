@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/owain-iotic/dolly/follower/client"
 	"github.com/owain-iotic/dolly/follower/common"
@@ -16,7 +17,7 @@ const (
 	ssl  = true
 	host = "plateng.iotics.space"
 
-	authToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTYxOTg1OSwiZXhwIjoxNjE5NjQ4Njg5fQ.cIxLrZ6vdcMPIdRlA6oHa-FBwC8yvIO1-R0oiFUo2gczWH4NHLu07DBj3rnY2hJi0HByTlZxsV0q_W8cL-6SnQ"
+	authToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTY4MzA3MiwiZXhwIjoxNjE5NzExOTAyfQ.zdiXHK39scpHJjwL3EOeSKGMtjroculC6XemPmjWLZ5KBtS_X2kLfwEXiRF_43zm9DHeB0K-oz4PrPxIrzc4iw"
 
 	followerTwinId = "did:iotics:iotTmRTTzh9LGuqPNkZgjQ3Pj6w8fBfovxfJ"
 )
@@ -33,6 +34,35 @@ type shipdata struct {
 var updates = make(chan *shipdata, 1024)
 
 func ShipServer(ws *websocket.Conn) {
+
+	go func() {
+		for {
+			buff := make([]byte, 65536)
+			n, err := ws.Read(buff)
+			if err != nil {
+				panic(err)
+			}
+			b := buff[0:n]
+			line := string(b)
+			fmt.Printf("CMD FROM UI %s\n", line)
+			if strings.HasPrefix(line, "DESCRIBE ") {
+				did := line[9:]
+				// Now do a describe on it, and send the result back...
+				resp, err := client.DescribeTwin(ssl, host, authToken, did)
+				if err != nil {
+					panic(err)
+				}
+
+				js, err := json.Marshal(resp)
+				fmt.Printf("JS is %s", js)
+
+				_, err = ws.Write([]byte(fmt.Sprintf("DESCRIBE %s", js)))
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+	}()
 
 	for {
 		shipdata := <-updates
