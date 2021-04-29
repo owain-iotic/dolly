@@ -38,7 +38,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//ship.TwinName = "lollypop4"
+	ship.TwinName = "lollypop4"
 
 	ship.Load("did:iotics:iotMBLRg33y6XQwd9pTpNDJxTwX9JMcG7hYb")
 
@@ -50,16 +50,13 @@ func main() {
 	// ships := ship.Search("some query param")
 	//ship.Init(twinid)
 
-	go ship.FeedAis.Follow(onFeedAisEvent)	
-	
+	go ship.FeedAis.Follow(onFeedAisEvent)
+
 	for {
+		// ship.FeedAis.Vallabel = rand.Intn(12)
+		// ship.FeedAis.Publish()
 		time.Sleep(1000 * time.Millisecond)
 	}
-	// for {
-	// 	ship.FeedAis.Vallabel = rand.Intn(12)
-	// 	ship.FeedAis.Publish()
-	// 	time.Sleep(1000 * time.Millisecond)
-	// }
 }
 
 type onEventFeedAis func(feed FeedAis) string
@@ -246,54 +243,54 @@ type Config struct {
 	AuthToken    string
 }
 
-type Data struct {
-	items map[string]interface{}
-}
+// type Data struct {
+// 	items map[string]interface{}
+// }
 
-func NewData() Data {
-	return Data{
-		items: make(map[string]interface{}),
-	}
-}
+// func NewData() Data {
+// 	return Data{
+// 		items: make(map[string]interface{}),
+// 	}
+// }
 
-func (d *Data) Add(label string, value interface{}) {
-	d.items[label] = value
-}
+// func (d *Data) Add(label string, value interface{}) {
+// 	d.items[label] = value
+// }
 
-func (d *Data) ToJson() ([]byte, error) {
-	rtn, err := json.Marshal(d.items)
-	if err != nil {
-		return []byte{}, err
-	}
+// func (d *Data) ToJson() ([]byte, error) {
+// 	rtn, err := json.Marshal(d.items)
+// 	if err != nil {
+// 		return []byte{}, err
+// 	}
 
-	return rtn, nil
-}
+// 	return rtn, nil
+// }
 
-func (d *Data) ToBase64Json() (string, error) {
-	json, err := d.ToJson()
-	if err != nil {
-		return "", err
-	}
-	encoded := base64.StdEncoding.EncodeToString(json)
-	return encoded, nil
-}
+// func (d *Data) ToBase64Json() (string, error) {
+// 	json, err := d.ToJson()
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	encoded := base64.StdEncoding.EncodeToString(json)
+// 	return encoded, nil
+// }
 
-func (d *Data) FromBase64Json(json string) (map[string]interface{}, error) {
-	encoded, err := base64.StdEncoding.DecodeString(json)
-	if err != nil {
-		return d.items, err
-	}
-	return d.FromJson(encoded)
-}
+// func (d *Data) FromBase64Json(json string) (map[string]interface{}, error) {
+// 	encoded, err := base64.StdEncoding.DecodeString(json)
+// 	if err != nil {
+// 		return d.items, err
+// 	}
+// 	return d.FromJson(encoded)
+// }
 
-func (d *Data) FromJson(item []byte) (map[string]interface{}, error) {
-	err := json.Unmarshal(item, &d.items)
-	if err != nil {
-		return d.items, err
-	}
+// func (d *Data) FromJson(item []byte) (map[string]interface{}, error) {
+// 	err := json.Unmarshal(item, &d.items)
+// 	if err != nil {
+// 		return d.items, err
+// 	}
 
-	return d.items, nil
-}
+// 	return d.items, nil
+// }
 
 func NewShip(config Config) (*Ship, error) {
 	os.Setenv("RESOLVER", config.Resolver)
@@ -521,10 +518,10 @@ func (s *Ship) Create() error {
 }
 
 type FeedAis struct {
-	config   Config
-	stomp    *IoticsStompClient
-	TwinID   *string
-	FeedID   string
+	config   Config             `json:"-"`
+	stomp    *IoticsStompClient `json:"-"`
+	TwinID   *string            `json:"-"`
+	FeedID   string             `json:"-"`
 	Vallabel int
 }
 
@@ -555,13 +552,12 @@ func (t *FeedAis) Publish() error {
 	twinId := t.TwinID
 	feedId := t.FeedID
 
-
-
-	data := NewData()
-	//for _, v := range feed.Data {
-	data.Add("vallabel", t.Vallabel)
-	//}
-	b64Json, err := data.ToBase64Json()
+	data, err := json.Marshal(t)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
+	b64Json := base64.StdEncoding.EncodeToString(data)
 	if err != nil {
 		return err
 	}
@@ -569,7 +565,7 @@ func (t *FeedAis) Publish() error {
 	log.Info(b64Json)
 
 	data1 := fmt.Sprintf("{\"sample\": {\"data\": \"%s\", \"mime\": \"application/json\", \"occurredAt\": \"%s\"}}", b64Json, time.Now().Format(time.RFC3339Nano))
-	log.Infof("Posting update twinid: %s feedid %s data: %s...\n", *twinId, feedId, data1)
+	log.Infof("Posting update twinid: %s feedid %s data: %d...\n", *twinId, feedId, t.Vallabel)
 	err = t.stomp.PostFeedData(*twinId, feedId, data1)
 	if err != nil {
 		return err
@@ -625,18 +621,23 @@ func (t *FeedAis) Follow(fn onEventFeedAis) {
 			// Now find what we want...
 			feedData := result["feedData"].(map[string]interface{})
 			dp := feedData["data"].(string)
-			// val, _ := base64.StdEncoding.DecodeString(dp)
-			data := NewData()
-			bits, err := data.FromBase64Json(string(dp))
-			if err != nil {
-				fmt.Printf("error getting bits %v\n", err)
+			val, _ := base64.StdEncoding.DecodeString(dp)
+
+			if err := json.Unmarshal(val, &t); err != nil {
+				panic(err)
 			}
 
-			t.Vallabel = int(bits["vallabel"].(float64))
+			// data := NewData()
+			// bits, err := data.FromBase64Json(string(dp))
+			// if err != nil {
+			// 	fmt.Printf("error getting bits %v\n", err)
+			// }
+
+			// t.Vallabel = int(bits["vallabel"].(float64))
 
 			fn(*t)
 			//fmt.Printf("MESSAGE %s %s %s\n", myloc.twinId, myloc.feedId, val)
-			time.Sleep(1 * time.Second)
+			//time.Sleep(1 * time.Second)
 		}
 	}(loc)
 }
