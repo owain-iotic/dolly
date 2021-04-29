@@ -295,55 +295,6 @@ type Config struct {
 	AuthToken    string
 }
 
-// type Data struct {
-// 	items map[string]interface{}
-// }
-
-// func NewData() Data {
-// 	return Data{
-// 		items: make(map[string]interface{}),
-// 	}
-// }
-
-// func (d *Data) Add(label string, value interface{}) {
-// 	d.items[label] = value
-// }
-
-// func (d *Data) ToJson() ([]byte, error) {
-// 	rtn, err := json.Marshal(d.items)
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-
-// 	return rtn, nil
-// }
-
-// func (d *Data) ToBase64Json() (string, error) {
-// 	json, err := d.ToJson()
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	encoded := base64.StdEncoding.EncodeToString(json)
-// 	return encoded, nil
-// }
-
-// func (d *Data) FromBase64Json(json string) (map[string]interface{}, error) {
-// 	encoded, err := base64.StdEncoding.DecodeString(json)
-// 	if err != nil {
-// 		return d.items, err
-// 	}
-// 	return d.FromJson(encoded)
-// }
-
-// func (d *Data) FromJson(item []byte) (map[string]interface{}, error) {
-// 	err := json.Unmarshal(item, &d.items)
-// 	if err != nil {
-// 		return d.items, err
-// 	}
-
-// 	return d.items, nil
-// }
-
 func NewShip(config Config) (*Ship, error) {
 	os.Setenv("RESOLVER", config.Resolver)
 	var rtn Ship

@@ -8,16 +8,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	//"sync/atomic"
-	//"math/rand"
 	"os"
 	"time"
-	// "github.com/go-stomp/stomp/v3"
-	// "github.com/google/uuid"
-	// "golang.org/x/net/websocket"
-)
 
-//{\"visibility\":\"PUBLIC\"}
+)
 
 func main() {
 	config := Config{
@@ -28,10 +22,6 @@ func main() {
 		Host:         "plateng.iotics.space",
 		AuthToken:    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2OTc2NzMsImlhdCI6MTYxOTY4NDA3MywiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.GPu_iFx_GJ1vxkxXxNDey9YPGvnXufLvKJauay-oe6v5wJZ1iVyll-1xVOY99InRr3OSU8AGXj8CFcl1LoMt1w",
 	}
-
-	//export DID_USER_SEED=89489442ac079dbab0f4b5c5542b35c7bbd8bea23eb7dcb9e81dab3e0d194832
-	//export DID_USER_KEYNAME=fn-host
-	//export DID_USER_DID=did:iotics:iotRiz6aTyJBiRFRBNmjkrKaPpZxym7B3Rut
 
 	ship, err := NewShip(config)
 	if err != nil {
@@ -627,17 +617,9 @@ func (t *FeedAis) Follow(fn onEventFeedAis) {
 			}
 
 
-			// data := NewData()
-			// bits, err := data.FromBase64Json(string(dp))
-			// if err != nil {
-			// 	fmt.Printf("error getting bits %v\n", err)
-			// }
-
-			// t.Vallabel = int(bits["vallabel"].(float64))
 
 			fn(*t)
-			//fmt.Printf("MESSAGE %s %s %s\n", myloc.twinId, myloc.feedId, val)
-			//time.Sleep(1 * time.Second)
+
 		}
 	}(loc)
 }
