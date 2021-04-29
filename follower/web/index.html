@@ -98,12 +98,44 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 			d = `
 			DID: ` + data.Twin.Id.Value + `<BR>
 			Visibility: ` + data.Twin.Visibility + `<BR>`
+
+			labels = ""
+			for(j=0;j<data.Result.Labels.length;j++) {
+				if (labels!="") labels += ","
+				labels+=data.Result.Labels[j].Value
+			}
+			d = d + "Labels: " + labels + "<br>"
+
+			comments = ""
+			for(j=0;j<data.Result.Comments.length;j++) {
+				if (comments!="") comments += ","
+				comments+=data.Result.Comments[j].Value
+			}
+			d = d + "Comments: " + comments + "<br>"
+
+			tags = ""
+			for(j=0;j<data.Result.Tags.length;j++) {
+				if (tags!="") tags += ","
+				tags+=data.Result.Tags[j]
+			}
+			d = d + "Tags: " + tags + "<br>"
 			
+			d = d + "<br>"
 			feeds = data.Result.Feeds
 			for (i=0;i<feeds.length;i++) {
 				feed = feeds[i]
-				d = d + "Feed ID=" + feed.FeedId.Value + " storeLast=" + feed.StoreLast + "<br>"
+				labels = ""
+				for(j=0;j<feed.Labels.length;j++) {
+					if (labels!="") labels += ","
+					labels+=feed.Labels[j].value
+				}
+				d = d + "Feed ID=" + feed.FeedId.Value + " storeLast=" + feed.StoreLast + " labels=" + labels + "<br>"
 			}
+
+// {"Twin":{"Visibility":"PUBLIC","Id":{"Value":"did:iotics:iotMEe8p4de64aSGsnC7cDtfkdMek2fpFGUP"}},
+// "Result":{"Location":{"Lat":51.507359,"Lon":-0.136439},
+//    "Comments":[{"Lang":"en","Value":"Ship"}],
+//    "Tags":["omg","ship"],"Properties":[]}}
 
 			d = d + `<br><button onclick="dismiss()">OK</button>`
 
