@@ -34,6 +34,7 @@ func NewTwinner(twinID string, authToken string, httpClient *HttpClient) Twinner
 	}
 }
 
+// Load loads the source twin up so we can use it to generate a code template
 func (t *Twinner) Load() error {
 	var err error
 	t.Twin, err = t.httpClient.DescribeTwin()
@@ -41,14 +42,21 @@ func (t *Twinner) Load() error {
 		fmt.Println(err)
 	}
 
+	fmt.Printf("Loaded twin %v\n", t.Twin)
+
 	err = t.LoadFeeds()
 	if err != nil {
 		return err
 	}
-	fmt.Println(t.Feeds[0].Feed.TwinID)
+
+	for i, feed := range t.Feeds {
+		fmt.Printf(" - Feed[%d] %v\n", i, feed)
+	}
+
 	return nil
 }
 
+// loadFile loads file
 func (t *Twinner) loadFile(name string) (string, error) {
 	data, err := ioutil.ReadFile(name)
 	if err != nil {
@@ -57,6 +65,7 @@ func (t *Twinner) loadFile(name string) (string, error) {
 	return string(data), nil
 }
 
+// Generate generates the code from template and using the twin data...
 func (t *Twinner) Generate() error {
 	//td := Todo{"Test templates", "Let's test a template to see the magic."}
 	fmt.Println(t.Twin.Result.Labels[0].Value)
@@ -77,13 +86,16 @@ func (t *Twinner) Generate() error {
 }
 
 func main() {
-	fmt.Println("hi")
+	fmt.Println("Twingen starting...")
 	twinID := "did:iotics:iotCya2zUUN4TGbtp8FHwLPjewsNbJpffHpr"
-	authToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk1MjM3MDgsImlhdCI6MTYxOTUxMDEwOCwiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.1Qv_xujI8joRFX13wciFIzQUvK70iALGZN7Rb6sff7WldSU8YyS2CFHlu69XB60ulPDCHy67QV-xtuX1Zkku2w"
+	authToken := "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTY4MzA3MiwiZXhwIjoxNjE5NzExOTAyfQ.zdiXHK39scpHJjwL3EOeSKGMtjroculC6XemPmjWLZ5KBtS_X2kLfwEXiRF_43zm9DHeB0K-oz4PrPxIrzc4iw"
 	httpClient := NewHttpClient("plateng.iotics.space", true, authToken, twinID)
 
 	twinner := NewTwinner(twinID, authToken, &httpClient)
+	fmt.Printf("Loading twin %s...\n", twinID)
 	twinner.Load()
+
+	fmt.Println("Generating code...")
 	err := twinner.Generate()
 	fmt.Println(err)
 }
