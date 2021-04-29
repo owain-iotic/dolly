@@ -1,10 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"text/template"
+)
+
+const (
+	twin_template = "./templates/test.go.tmpl"
 )
 
 type Twinner struct {
@@ -15,6 +20,16 @@ type Twinner struct {
 	Feeds      []*FeedResp
 }
 
+// Create a new Twinner to copy an existing twin into a code template
+func NewTwinner(twinID string, authToken string, httpClient *HttpClient) Twinner {
+	return Twinner{
+		TwinID:     twinID,
+		authToken:  authToken,
+		httpClient: httpClient,
+	}
+}
+
+// LoadFeeds runs describe feed on each one so we get details
 func (t *Twinner) LoadFeeds() error {
 	for _, v := range t.Twin.Result.Feeds {
 		feed, err := t.httpClient.DescribeFeed(v.FeedId.Value)
@@ -26,14 +41,6 @@ func (t *Twinner) LoadFeeds() error {
 	return nil
 }
 
-func NewTwinner(twinID string, authToken string, httpClient *HttpClient) Twinner {
-	return Twinner{
-		TwinID:     twinID,
-		authToken:  authToken,
-		httpClient: httpClient,
-	}
-}
-
 // Load loads the source twin up so we can use it to generate a code template
 func (t *Twinner) Load() error {
 	var err error
@@ -43,6 +50,8 @@ func (t *Twinner) Load() error {
 	}
 
 	fmt.Printf("Loaded twin %v\n", t.Twin)
+	js, err := json.Marshal(t.Twin)
+	fmt.Printf("Twin JSON %s\n", js)
 
 	err = t.LoadFeeds()
 	if err != nil {
@@ -51,6 +60,9 @@ func (t *Twinner) Load() error {
 
 	for i, feed := range t.Feeds {
 		fmt.Printf(" - Feed[%d] %v\n", i, feed)
+		js, err = json.Marshal(feed)
+		fmt.Printf("Feed JSON %s\n", js)
+
 	}
 
 	return nil
@@ -67,17 +79,19 @@ func (t *Twinner) loadFile(name string) (string, error) {
 
 // Generate generates the code from template and using the twin data...
 func (t *Twinner) Generate() error {
-	//td := Todo{"Test templates", "Let's test a template to see the magic."}
-	fmt.Println(t.Twin.Result.Labels[0].Value)
-	fileContent, err := t.loadFile("./templates/test.go.tmpl")
+
+	// Load up the template
+	fileContent, err := t.loadFile(twin_template)
 	if err != nil {
 		panic(err)
 	}
+	// Create a template from the file
 	tem, err := template.New("main").Parse(fileContent)
 	if err != nil {
 		return err
 	}
 
+	// Execute the template using Twinner as the data source...
 	err = tem.Execute(os.Stdout, t)
 	if err != nil {
 		return err
