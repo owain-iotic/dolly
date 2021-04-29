@@ -1,0 +1,17 @@
+package main 
+
+// built from twin: {{ .TwinID}}
+
+type {{ (index .Twin.Result.Labels 0).Value }} struct {
+	MMSI             int
+	SpeedOverGround  float32
+	CourseOverGround float32
+}
+
+func New{{ (index .Twin.Result.Labels 0).Value }}() {{ (index .Twin.Result.Labels 0).Value }} {
+	return {{ (index .Twin.Result.Labels 0).Value }}{}
+}
+
+func (x *{{ (index .Twin.Result.Labels 0).Value }}) Publish() (error){
+	
+}

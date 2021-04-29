@@ -1,0 +1,41 @@
+{
+    "newVisibility": {
+        "Visibility": "PUBLIC"
+    },
+    "location": {
+        "location": {
+            "lat": 123,
+            "lon": 112
+        }
+    },
+    "labels": {
+        "added": [
+            {
+                "lang": "en",
+                "value": "label"
+            }
+        ]
+    },
+    "comments": {
+        "added": [
+            {
+                "lang": "en",
+                "value": "comment value"
+            }
+        ]
+    },
+    "tags": {
+        "added": [
+            "foo"
+        ]
+    },
+    "properties": {
+        "added": [
+            {
+                "key": "key",
+                "stringLiteralValue": "prop value"
+            }
+        ]
+    }
+    
+}
