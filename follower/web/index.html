@@ -18,6 +18,32 @@ function dismiss() {
 
 }
 
+// Converts from degrees to radians.
+function toRadians(degrees) {
+  return degrees * Math.PI / 180;
+};
+ 
+// Converts from radians to degrees.
+function toDegrees(radians) {
+  return radians * 180 / Math.PI;
+}
+
+
+function bearing(startLat, startLng, destLat, destLng){
+  startLat = toRadians(startLat);
+  startLng = toRadians(startLng);
+  destLat = toRadians(destLat);
+  destLng = toRadians(destLng);
+
+  y = Math.sin(destLng - startLng) * Math.cos(destLat);
+  x = Math.cos(startLat) * Math.sin(destLat) -
+        Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
+  brng = Math.atan2(y, x);
+  brng = toDegrees(brng);
+  return (brng + 360) % 360;
+}
+
+
 function initMap() {
 
 icon = {
@@ -125,13 +151,28 @@ icons = ["sh1.png", "sh2.png", "sh3.png", "sh5.png"]
 
 				// Add it to the list...
 				html = document.getElementById("shipdetails").innerHTML
-				html = html + "<img width='32' height='20' src='" + icons[iconi] + "'> <span style='font-family:monospace;font-size:8px;color:#444' id='shipidi_" + shipid + "'>" + did + "</span> <span style='font-family:monospace;font-size:8px;color:#008'>" + shipid + "</span><br>"
+				html = html + "<img width='32' height='20' src='" + icons[iconi] + "'> "
+				html = html + " <img id='compass_" + shipid + "' width='20' height='20' src='/up.png'> "
+				+"<span style='font-family:monospace;font-size:8px;color:#444' id='shipidi_" + shipid + "'>" + did + "</span> <span style='font-family:monospace;font-size:8px;color:#008'>" + shipid + "</span><br>"
 				document.getElementById("shipdetails").innerHTML = html
 
 				iconi = (iconi+1) % icons.length
 			} else {
 				marker = ships[id]
 				var latlng = new google.maps.LatLng(lat, lon);
+				
+				deg = bearing(marker.getPosition().lat(), marker.getPosition().lng(), lat, lon)
+
+
+				// Update the bearing signifier...
+				div = document.getElementById("compass_" + shipid)
+
+				div.style.webkitTransform = 'rotate('+deg+'deg)'; 
+				div.style.mozTransform    = 'rotate('+deg+'deg)'; 
+				div.style.msTransform     = 'rotate('+deg+'deg)'; 
+				div.style.oTransform      = 'rotate('+deg+'deg)'; 
+				div.style.transform       = 'rotate('+deg+'deg)'; 
+
 				marker.setPosition(latlng)
 				// Show it's moving...
 
