@@ -11,45 +11,52 @@ type Feed struct {
 	ID string
 	TwinID string
 	StoreLast bool
-	Values map[string]string
 	Tags []string
 	Comments []*langstring
 	Labels []*langstring
 }
 
+{{range .Feeds}}
+type FeedType{{.Feed.ID.Value}} struct {
+	Feed
+{{range .Result.Values}}
+	{{.Label}} = "{{.Comment}}"{{end}}
+}
+{{end}}
+
+
 type {{ (index .Twin.Result.Labels 0).Value }} struct {
 
-	PUBLIC	string
-	ID		string
-	Feeds	map[string]*Feed
+	PUBLIC  string
+	ID      string
+	{{range .Feeds}}
+	Feed{{.Feed.ID.Value}} *FeedType{{.Feed.ID.Value}}
+	{{end}}
 }
 
 func New{{ (index .Twin.Result.Labels 0).Value }}() {{ (index .Twin.Result.Labels 0).Value }} {
 	v := {{ (index .Twin.Result.Labels 0).Value }}{
 		PUBLIC: "{{.Twin.Twin.Visibility}}",
 		ID: "{{.Twin.Twin.Id.Value}},
-		Feeds: make(map[string]Feed),
 	}
 
 	{{range .Feeds}}
-	f := &Feed{
+	f := &Feed{{.Feed.ID.Value}}{
 		ID: "{{.Feed.ID.Value}}",
 		TwinID: "{{.Feed.TwinID.Value}}",
 		StoreLast: {{.Result.StoreLast}},
-		Values: make(map[string]string)
 		Tags: make([]string, 0),
 		Comments: make([]langstring, 0),
 		Labels: make([]langstring, 0),
 	}
-	{{range .Result.Values}}
-	f.Values["{{.Label}}"] = "{{.Comment}}"{{end}}
 	{{range .Result.Tags}}
 	f.Tags = append(f.Tags, "{{.}}"){{end}}
 	{{range .Result.Comments}}
 	f.Comments = append(f.Comments, &langstring{Value:"{{.Value}}", Lang:"{{.Lang}}"}){{end}}
 	{{range .Result.Labels}}
 	f.Labels = append(f.Labels, &langstring{Value:"{{.Value}}", Lang:"{{.Lang}}"}){{end}}
-	v.Feeds["{{.Feed.ID.Value}}"] = f{{end}}
+	
+	v.Feed{{.Feed.ID.Value}} = f{{end}}
 	return v
 }
 
