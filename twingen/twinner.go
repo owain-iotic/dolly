@@ -145,8 +145,8 @@ func (t *Twinner) Generate() error {
 	}
 
 	c := NewTemplateModel()
-	c.TwinName = strings.Title(t.Twin.Result.Labels[0].Value)
-	c.LCaseTwinName = strings.ToLower(t.Twin.Result.Labels[0].Value)
+	c.TwinName = strings.Title(t.Twin.Result.Tags[0])
+	c.LCaseTwinName = strings.ToLower(t.Twin.Result.Tags[0])
 	c.Visibility = t.Twin.Twin.Visibility
 	c.Feeds = []FeedTmpl{}
 	c.Comments = []CommentsTmpl{}
