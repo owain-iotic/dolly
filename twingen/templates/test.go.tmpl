@@ -20,7 +20,7 @@ type Feed struct {
 type FeedType{{.Feed.ID.Value}} struct {
 	Feed
 {{range .Result.Values}}
-	{{.Label}} = "{{.Comment}}"{{end}}
+	{{.Label}} string{{end}}
 }
 {{end}}
 
@@ -55,6 +55,9 @@ func New{{ (index .Twin.Result.Labels 0).Value }}() {{ (index .Twin.Result.Label
 	f.Comments = append(f.Comments, &langstring{Value:"{{.Value}}", Lang:"{{.Lang}}"}){{end}}
 	{{range .Result.Labels}}
 	f.Labels = append(f.Labels, &langstring{Value:"{{.Value}}", Lang:"{{.Lang}}"}){{end}}
+
+	{{range .Result.Values}}
+	f.{{.Label}} = "{{.Comment}}"{{end}}
 	
 	v.Feed{{.Feed.ID.Value}} = f{{end}}
 	return v
