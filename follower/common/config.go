@@ -1,0 +1,10 @@
+package common
+
+const (
+	Ssl  = true
+	Host = "plateng.iotics.space"
+
+	AuthToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTcxMzU3MywiZXhwIjoxNjE5NzQyNDAzfQ.QA5tBURX7cBrxEDVlng1grKs2VG1LgDvBupwnky-i4yDUO8gl0Pf3wOV6LhPQr8nXmhWRtzDGBYLGMBdGsnnSQ"
+
+	FollowerTwinId = "did:iotics:iotTmRTTzh9LGuqPNkZgjQ3Pj6w8fBfovxfJ"
+)

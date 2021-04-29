@@ -13,15 +13,6 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-const (
-	ssl  = true
-	host = "plateng.iotics.space"
-
-	authToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTY4MzA3MiwiZXhwIjoxNjE5NzExOTAyfQ.zdiXHK39scpHJjwL3EOeSKGMtjroculC6XemPmjWLZ5KBtS_X2kLfwEXiRF_43zm9DHeB0K-oz4PrPxIrzc4iw"
-
-	followerTwinId = "did:iotics:iotTmRTTzh9LGuqPNkZgjQ3Pj6w8fBfovxfJ"
-)
-
 type shipdata struct {
 	lat  float64
 	lon  float64
@@ -48,7 +39,7 @@ func ShipServer(ws *websocket.Conn) {
 			if strings.HasPrefix(line, "DESCRIBE ") {
 				did := line[9:]
 				// Now do a describe on it, and send the result back...
-				resp, err := client.DescribeTwin(ssl, host, authToken, did)
+				resp, err := client.DescribeTwin(common.Ssl, common.Host, common.AuthToken, did)
 				if err != nil {
 					panic(err)
 				}
@@ -79,15 +70,15 @@ func main() {
 	common.LoadShipConfig("selected_ships.txt", "twins.txt")
 
 	scheme := "ws"
-	if ssl {
+	if common.Ssl {
 		scheme = "wss"
 	}
 
-	url := fmt.Sprintf("%s://%s/ws", scheme, host)
+	url := fmt.Sprintf("%s://%s/ws", scheme, common.Host)
 
 	cli := client.NewIoticsStompClient()
 
-	err := cli.Connect(url, authToken)
+	err := cli.Connect(url, common.AuthToken)
 	if err != nil {
 		panic(err)
 	}
@@ -96,7 +87,7 @@ func main() {
 
 	// Subscribe to the twins...
 	for id, did := range common.Shiptwins {
-		dest := fmt.Sprintf("/qapi/twins/%s/interests/twins/%s/feeds/%s", followerTwinId, did, "shiplocation")
+		dest := fmt.Sprintf("/qapi/twins/%s/interests/twins/%s/feeds/%s", common.FollowerTwinId, did, "shiplocation")
 
 		ch, err := cli.Subscribe(dest)
 		if err != nil {

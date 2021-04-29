@@ -15,13 +15,6 @@ import (
 	"github.com/owain-iotic/dolly/follower/common"
 )
 
-const (
-	ssl  = true
-	host = "plateng.iotics.space"
-
-	authToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTY4MzA3MiwiZXhwIjoxNjE5NzExOTAyfQ.zdiXHK39scpHJjwL3EOeSKGMtjroculC6XemPmjWLZ5KBtS_X2kLfwEXiRF_43zm9DHeB0K-oz4PrPxIrzc4iw"
-)
-
 func main() {
 
 	var speed float64
@@ -33,15 +26,15 @@ func main() {
 	common.LoadShipConfig("selected_ships.txt", "twins.txt")
 
 	scheme := "ws"
-	if ssl {
+	if common.Ssl {
 		scheme = "wss"
 	}
 
-	url := fmt.Sprintf("%s://%s/ws", scheme, host)
+	url := fmt.Sprintf("%s://%s/ws", scheme, common.Host)
 
 	cli := client.NewIoticsStompClient()
 
-	err := cli.Connect(url, authToken)
+	err := cli.Connect(url, common.AuthToken)
 	if err != nil {
 		panic(err)
 	}
