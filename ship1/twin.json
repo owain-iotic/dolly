@@ -1,0 +1,51 @@
+{
+  "comments": {
+    "added": [
+      {
+        "lang": "lang",
+        "value": "value"
+      }
+    ]
+  },
+  "newVisibility": {},
+  "location": {
+    "location": {
+      "lat": 6.027456183070403,
+      "lon": 1.4658129805029452
+    }
+  },
+  "properties": {
+    "added": [
+      {
+        "key": "key",
+        "langLiteralValue": {
+          "lang": "lang",
+          "value": "value"
+        },
+        "literalValue": {
+          "dataType": "dataType",
+          "value": "value"
+        },
+        "stringLiteralValue": {
+          "value": "value"
+        },
+        "uriValue": {
+          "value": "value"
+        }
+      }
+    ]
+  },
+  "labels": {
+    "added": [
+      {
+        "lang": "lang",
+        "value": "value"
+      }
+    ]
+  },
+  "tags": {
+    "added": [
+      "added"
+    ]
+  }
+}

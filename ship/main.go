@@ -4,9 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"math/rand"
 
+	//"math/rand"
+
+	log "github.com/sirupsen/logrus"
+
+	//"sync/atomic"
 	//"math/rand"
 	"os"
 	"time"
@@ -16,6 +19,56 @@ import (
 )
 
 //{\"visibility\":\"PUBLIC\"}
+
+func main() {
+	config := Config{
+		Resolver:     "https://did.prd.iotics.com",
+		AgentSeed:    "4137d728017dd491d26ad48d64c9a24ab4e8c898292957d63acbf87f7a507dab",
+		AgentKeyName: "agent-0",
+		AgentDid:     "did:iotics:iotWDjh2FcRfHxwCj7WB8mn2GCoKabVew999",
+		Host:         "plateng.iotics.space",
+		AuthToken:    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2OTc2NzMsImlhdCI6MTYxOTY4NDA3MywiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.GPu_iFx_GJ1vxkxXxNDey9YPGvnXufLvKJauay-oe6v5wJZ1iVyll-1xVOY99InRr3OSU8AGXj8CFcl1LoMt1w",
+	}
+
+	//export DID_USER_SEED=89489442ac079dbab0f4b5c5542b35c7bbd8bea23eb7dcb9e81dab3e0d194832
+	//export DID_USER_KEYNAME=fn-host
+	//export DID_USER_DID=did:iotics:iotRiz6aTyJBiRFRBNmjkrKaPpZxym7B3Rut
+
+	ship, err := NewShip(config)
+	if err != nil {
+		panic(err)
+	}
+	//ship.TwinName = "lollypop4"
+
+	ship.Load("did:iotics:iotMBLRg33y6XQwd9pTpNDJxTwX9JMcG7hYb")
+
+	// err = ship.Create()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// ships := host.search()
+	// ships := ship.Search("some query param")
+	//ship.Init(twinid)
+
+	go ship.FeedAis.Follow(onFeedAisEvent)	
+	
+	for {
+		time.Sleep(1000 * time.Millisecond)
+	}
+	// for {
+	// 	ship.FeedAis.Vallabel = rand.Intn(12)
+	// 	ship.FeedAis.Publish()
+	// 	time.Sleep(1000 * time.Millisecond)
+	// }
+}
+
+type onEventFeedAis func(feed FeedAis) string
+
+func onFeedAisEvent(x FeedAis) string {
+	msg := fmt.Sprintf("val label %v", x.Vallabel)
+	fmt.Println(msg)
+	return msg
+}
 
 type NewFeed struct {
 	Labels    Labels     `json:"labels"`
@@ -242,39 +295,6 @@ func (d *Data) FromJson(item []byte) (map[string]interface{}, error) {
 	return d.items, nil
 }
 
-func main() {
-	config := Config{
-		Resolver:     "https://did.prd.iotics.com",
-		AgentSeed:    "4137d728017dd491d26ad48d64c9a24ab4e8c898292957d63acbf87f7a507dab",
-		AgentKeyName: "agent-0",
-		AgentDid:     "did:iotics:iotWDjh2FcRfHxwCj7WB8mn2GCoKabVew999",
-		Host:         "plateng.iotics.space",
-		AuthToken:    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2MzE5NTQsImlhdCI6MTYxOTYxODM1NCwiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.d_bLs1ydSA2pZ2U4IUYcKOjZwJ7gmFQJpRxBV1CMhef3Ofo75eJX2qOR5jyw1zGg5PEjhzTttfbcw4s1qw_zyw",
-	}
-
-	//export DID_USER_SEED=89489442ac079dbab0f4b5c5542b35c7bbd8bea23eb7dcb9e81dab3e0d194832
-	//export DID_USER_KEYNAME=fn-host
-	//export DID_USER_DID=did:iotics:iotRiz6aTyJBiRFRBNmjkrKaPpZxym7B3Rut
-
-	ship, err := NewShip(config)
-	if err != nil {
-		panic(err)
-	}
-
-	ship.TwinName = "lollypop4"
-
-	err = ship.Create()
-	if err != nil {
-		panic(err)
-	}
-	
-	for {
-		ship.FeedAis.Vallabel = rand.Intn(12)
-		ship.FeedAis.Publish()
-		time.Sleep(1000 * time.Millisecond)
-	}
-}
-
 func NewShip(config Config) (*Ship, error) {
 	os.Setenv("RESOLVER", config.Resolver)
 	var rtn Ship
@@ -289,6 +309,18 @@ func NewShip(config Config) (*Ship, error) {
 		return &rtn, err
 	}
 	return &rtn, nil
+}
+
+func (s *Ship) Load(twinID string) error {
+	s.TwinDid = twinID
+	feedAis, err := NewFeedAis(&s.TwinDid, s.config)
+	if err != nil {
+		return err
+	}
+
+	s.FeedAis = feedAis
+
+	return nil
 }
 
 func (s *Ship) valid() error {
@@ -523,6 +555,8 @@ func (t *FeedAis) Publish() error {
 	twinId := t.TwinID
 	feedId := t.FeedID
 
+
+
 	data := NewData()
 	//for _, v := range feed.Data {
 	data.Add("vallabel", t.Vallabel)
@@ -542,4 +576,67 @@ func (t *FeedAis) Publish() error {
 	}
 	return nil
 
+}
+
+func (t *FeedAis) followerID() string {
+	return "did:iotics:iotHL8fQvyXSm85KwSRmeWNhwr8PcLTGsdLY"
+}
+
+type followLoc struct {
+	twinId string
+	feedId string
+}
+
+func (t *FeedAis) Follow(fn onEventFeedAis) {
+	////
+	//locs []followLoc, failures chan followLoc, )
+	var failures chan followLoc
+	//var stat *int64
+	loc := followLoc{
+		twinId: *t.TwinID,
+		feedId: t.FeedID,
+	}
+	dest := fmt.Sprintf("/qapi/twins/%s/interests/twins/%s/feeds/%s", t.followerID(), *t.TwinID, t.FeedID)
+
+	ch, err := t.stomp.Subscribe(dest)
+	if err != nil {
+		panic(err)
+	}
+
+	// Read from ch...
+
+	go func(myloc followLoc) {
+		// atomic.AddInt64(stat, 1)
+		// defer atomic.AddInt64(stat, -1)
+
+		for {
+
+			m, ok := <-ch
+
+			if !ok {
+				failures <- myloc
+				return
+			}
+
+			// Get the data...
+			var result map[string]interface{}
+			json.Unmarshal(m.Body, &result)
+
+			// Now find what we want...
+			feedData := result["feedData"].(map[string]interface{})
+			dp := feedData["data"].(string)
+			// val, _ := base64.StdEncoding.DecodeString(dp)
+			data := NewData()
+			bits, err := data.FromBase64Json(string(dp))
+			if err != nil {
+				fmt.Printf("error getting bits %v\n", err)
+			}
+
+			t.Vallabel = int(bits["vallabel"].(float64))
+
+			fn(*t)
+			//fmt.Printf("MESSAGE %s %s %s\n", myloc.twinId, myloc.feedId, val)
+			time.Sleep(1 * time.Second)
+		}
+	}(loc)
 }

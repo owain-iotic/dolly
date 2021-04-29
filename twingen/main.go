@@ -102,7 +102,7 @@ func (t *Twinner) Generate() error {
 func main() {
 	fmt.Println("Twingen starting...")
 	twinID := "did:iotics:iotCya2zUUN4TGbtp8FHwLPjewsNbJpffHpr"
-	authToken := "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJkaWQ6aW90aWNzOmlvdEhCQ21wUHZUUVJySndXZFhNNTZhMTltclhLd0g0NmZGTCNhZ2VudC0wIiwiYXVkIjoiaHR0cHM6Ly9kaWQucHJkLmlvdGljcy5jb20iLCJzdWIiOiJkaWQ6aW90aWNzOmlvdENkdWpWQ3ZCNllQQ1JGa1VNTnpjSnVNMVdkUUZhcHBpVyIsImlhdCI6MTYxOTY4MzA3MiwiZXhwIjoxNjE5NzExOTAyfQ.zdiXHK39scpHJjwL3EOeSKGMtjroculC6XemPmjWLZ5KBtS_X2kLfwEXiRF_43zm9DHeB0K-oz4PrPxIrzc4iw"
+	authToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2OTc2NzMsImlhdCI6MTYxOTY4NDA3MywiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.GPu_iFx_GJ1vxkxXxNDey9YPGvnXufLvKJauay-oe6v5wJZ1iVyll-1xVOY99InRr3OSU8AGXj8CFcl1LoMt1w"
 	httpClient := NewHttpClient("plateng.iotics.space", true, authToken, twinID)
 
 	twinner := NewTwinner(twinID, authToken, &httpClient)
