@@ -1,0 +1,1350 @@
+package main
+
+import (
+	"encoding/base64"
+	"encoding/json"
+	"encoding/hex"
+    "fmt"
+	"math/rand"
+	"os"
+	"time"
+	"errors"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"sync"
+	"crypto/ecdsa"
+	"github.com/go-stomp/stomp/v3"
+	"github.com/google/uuid"
+	"golang.org/x/net/websocket"
+	log "github.com/sirupsen/logrus"
+	"github.com/Iotic-Labs/iotic-sdk-identity/sdk/go/identity"
+)
+
+func main() {
+	config := Config{
+		Resolver:     "https://did.prd.iotics.com",
+		AgentSeed:    "4137d728017dd491d26ad48d64c9a24ab4e8c898292957d63acbf87f7a507dab",
+		AgentKeyName: "agent-0",
+		AgentDid:     "did:iotics:iotWDjh2FcRfHxwCj7WB8mn2GCoKabVew999",
+		Host:         "plateng.iotics.space",
+		AuthToken:    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2OTc2NzMsImlhdCI6MTYxOTY4NDA3MywiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.GPu_iFx_GJ1vxkxXxNDey9YPGvnXufLvKJauay-oe6v5wJZ1iVyll-1xVOY99InRr3OSU8AGXj8CFcl1LoMt1w",
+	}
+
+	{{ .TwinName }}, err := New{{ .TwinName }}(config)
+	if err != nil {
+		panic(err)
+	}
+	{{ .TwinName }}.TwinName = "lollypop4"
+
+	//{{ .TwinName }}.Load("did:iotics:iotHL8fQvyXSm85KwSRmeWNhwr8PcLTGsdLY")
+
+	err = {{ .TwinName }}.Create()
+	if err != nil {
+		panic(err)
+	}
+	// {{ .TwinName }}s := host.search()
+	// {{ .TwinName }}s := {{ .TwinName }}.Search("some query param")
+	//{{ .TwinName }}.Init(twinid)
+
+	//go {{ .TwinName }}.FeedAis.Follow(onFeedAisEvent)
+
+	for {
+		{{ .TwinName }}.FeedAis.Vallabel = rand.Intn(12)
+		{{ .TwinName }}.FeedAis.Publish()
+		time.Sleep(1000 * time.Millisecond)
+	}
+}
+
+type onEventFeedAis func(feed FeedAis) string
+
+func onFeedAisEvent(x FeedAis) string {
+	msg := fmt.Sprintf("val label %v", x.Vallabel)
+	fmt.Println(msg)
+	return msg
+}
+
+type NewFeed struct {
+	Labels    Labels     `json:"labels"`
+	Comments  Comments   `json:"comments"`
+	Values    FeedValues `json:"values"`
+	Tags      FeedTags   `json:"tags"`
+	StoreLast bool       `json:"storeLast"`
+}
+
+type NewTwin struct {
+	NewVisibility Visibility `json:"newVisibility"`
+	Location      Location   `json:"location"`
+	Labels        Labels     `json:"labels"`
+	Comments      Comments   `json:"comments"`
+	Tags          Tags       `json:"tags"`
+	Properties    Properties `json:"properties"`
+	//Feeds         []Feedinfo
+}
+
+type FeedTags struct {
+	Added []string `json:"added"`
+}
+
+type FeedValues struct {
+	Added []ValuesAdded `json:"added"`
+}
+
+type Visibility struct {
+	Visibility string `json:"visibility"`
+}
+
+type Location struct {
+	Location Latlon `json:"location"`
+}
+
+type Comments struct {
+	Added []CommentsAdded `json:"added"`
+}
+
+type Tags struct {
+	Added []string `json:"added"`
+}
+
+type Labels struct {
+	Added []LabelsAdded `json:"added"`
+}
+
+type Properties struct {
+	Added []PropertiesAdded `json:"added"`
+}
+
+type PropertiesAdded struct {
+	Key   string             `json:"key"`
+	Value StringLiteralValue `json:"stringLiteralValue"`
+}
+
+type ValuesAdded struct {
+	Label    string `json:"label"`
+	Comment  string `json:"comment"`
+	Unit     string `json:"unit"`
+	DataType string `json:"dataType"`
+}
+
+type StringLiteralValue struct {
+	Value string `json:"value"`
+}
+
+type TagValue struct {
+	Value string `json:"value"`
+}
+
+type CommentsAdded struct {
+	Lang  string `json:"lang"`
+	Value string `json:"value"`
+}
+
+type LabelsAdded struct {
+	Lang  string `json:"lang"`
+	Value string `json:"value"`
+}
+
+type TagsAdded struct {
+	Tag string
+}
+
+type Idvalue struct {
+	Value string
+}
+
+type Twindata struct {
+	Visibility string
+	Id         Idvalue
+}
+
+type TwinsResp struct {
+	Twins []Twindata
+}
+
+// For describe twin
+type TwinResp struct {
+	Twin   Twindata
+	Result Twinresult
+}
+
+type Latlon struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+}
+
+type Label struct {
+	Lang  string `json:"lang"`
+	Value string `json:"value"`
+}
+
+type Feedinfo struct {
+	FeedId    Idvalue
+	StoreLast bool
+	Labels    []interface{}
+}
+
+type Propinfo struct {
+	Key                string
+	StringLiteralValue Idvalue
+}
+
+type Twinresult struct {
+	Location   Latlon
+	Labels     []Label
+	Comments   []Label
+	Feeds      []Feedinfo
+	Tags       []string
+	Properties []Propinfo
+}
+
+type FeedResp struct {
+	Feed   Feeddata
+	Result FeedResult `json:result`
+}
+
+// For describe twin
+type Feeddata struct {
+	ID     Idvalue `json:id`
+	TwinID Idvalue `json:twinID`
+}
+
+type Values struct {
+	Label    string
+	Comment  string
+	unit     string
+	dataType string
+}
+
+type FeedResult struct {
+	Labels    []Label
+	Comments  []Label
+	Values    []Values
+	Tags      []string
+	StoreLast bool
+}
+
+type {{ .TwinName }} struct {
+	TwinName string
+	TwinDid  string
+	config   Config
+	did      *Did
+	FeedAis  FeedAis
+}
+
+type Config struct {
+	Resolver     string
+	AgentSeed    string
+	AgentKeyName string
+	AgentDid     string
+	Host         string
+	AuthToken    string
+}
+
+
+func New{{ .TwinName }}(config Config) (*{{ .TwinName }}, error) {
+	os.Setenv("RESOLVER", config.Resolver)
+	var rtn {{ .TwinName }}
+	did, err := NewDidFromConfig(config)
+	if err != nil {
+		return &rtn, err
+	}
+	rtn.config = config
+	rtn.did = did
+	{{range .Feeds}}
+	rtn.{{ .FeedStructName }}, err = New{{ .FeedStructName }}(&rtn.TwinDid, config)
+	{{ end }}
+
+	if err != nil {
+		return &rtn, err
+	}
+	return &rtn, nil
+}
+
+func (s *{{ .TwinName }}) Load(twinID string) error {
+	s.TwinDid = twinID
+	
+	{{range .Feeds}}
+	{{ .FeedStructNameLCase}}, err :=  New{{ .FeedStructName }}(&s.TwinDid, s.config)
+	if err != nil {
+		return err
+	}
+	s.{{ .FeedStructName }} = {{ .FeedStructNameLCase}}
+	{{ end }}
+
+
+	return nil
+}
+
+func (s *{{ .TwinName }}) valid() error {
+	if s.TwinName == "" {
+		return fmt.Errorf("Must set the twin name")
+	}
+	return nil
+}
+
+func (s *{{ .TwinName }}) createTwinDid() error {
+	didBytes, err := s.did.CreateTwinDid(s.TwinName)
+	s.TwinDid = string(didBytes)
+	if err != nil {
+		return err
+	}
+	log.Info(string(s.TwinDid))
+	return nil
+}
+
+func (s *{{ .TwinName }}) createTwin() error {
+
+	httpClient := NewHttpClient(s.config.Host, true, s.config.AuthToken)
+
+	didBytes, err := s.did.CreateTwinDid(s.TwinName)
+	s.TwinDid = string(didBytes)
+	if err != nil {
+		return err
+	}
+	log.Info(string(s.TwinDid))
+
+	err = httpClient.CreateTwin(s.TwinDid)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *{{ .TwinName }}) createFeed() error {
+	httpClient := NewHttpClient(s.config.Host, true, s.config.AuthToken)
+	storeLast := true
+
+	{{range .Feeds}}	
+	err := httpClient.CreateFeed(s.TwinDid, "{{ .FeedID }}", storeLast)
+	if err != nil {
+		return err
+	}
+	{{ end }}
+
+	return nil
+}
+
+func (s *{{ .TwinName }}) getTwinData() NewTwin {
+	rtn := NewTwin{
+		NewVisibility: Visibility{
+			"{{ .Visibility }}",
+		},
+		Comments: Comments{
+			Added: []CommentsAdded{
+				{{ range .Comments }}
+				{
+					Lang:  "{{ .Lang }}",
+					Value: "{{ .Value }}",
+				},
+				{{ end }}
+			},
+		},
+		Properties: Properties{
+			Added: []PropertiesAdded{
+				{{ range .Properties }}
+				{
+					Key: "{{ .Key }}",
+					Value: StringLiteralValue{
+						"{{ .Value }}",
+					},
+				},
+				{{ end }}
+			},
+		},
+		Labels: Labels{
+			Added: []LabelsAdded{
+				{{ range .Labels }}
+				{
+					Lang:  "{{ .Lang }}",
+					Value: "{{ .Value }}",
+				},
+				{{ end }}
+			},
+		},
+		Location: Location{
+			Latlon{
+				Lat: 0,
+				Lon: 0,
+			},
+		},
+		Tags: Tags{
+			[]string{
+				{{ range .Tags }}
+				"{{ . }}",
+				{{ end }}
+			},
+		},
+	}
+	return rtn
+}
+
+func (s *{{ .TwinName }}) updateTwin() error {
+
+	httpClient := NewHttpClient(s.config.Host, true, s.config.AuthToken)
+
+	log.Info(string(s.TwinDid))
+
+	err := httpClient.UpdateTwin(s.TwinDid, s.getTwinData())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *{{ .TwinName }}) getFeedData() NewFeed {
+
+	//Need to support multiple feeds
+
+	rtn := NewFeed{
+		StoreLast: true,
+		Values: FeedValues{
+			Added: []ValuesAdded{
+				{{ range (index .Feeds 0).FeedValues }}
+				{
+					Label:    "{{ .Label }}",
+					Comment:  "{{ .Comment }}",
+					Unit:     "{{ .Unit }}",
+					DataType: "{{ .DataType }}",
+				},
+				{{ end }}
+			},
+		},
+		Comments: Comments{
+			Added: []CommentsAdded{
+				{{ range (index .Feeds 0).FeedComments }}
+				{
+					Lang:  "{{ .Lang }}",
+					Value: "{{ .Value }}",
+				},
+				{{ end }}
+			},
+		},
+		Labels: Labels{
+			Added: []LabelsAdded{
+				{{ range (index .Feeds 0).FeedLabels }}
+				{
+					Lang:  "{{ .Lang }}",
+					Value: "{{ .Value }}",
+				},
+				{{ end }}
+			},
+		},
+		Tags: FeedTags{
+			[]string{
+				{{ range (index .Feeds 0).FeedTags }}
+				"{{ . }}",
+				{{ end }}
+			},
+		},
+	}
+	return rtn
+
+}
+
+func (s *{{ .TwinName }}) updateFeed(feedID string) error {
+
+	httpClient := NewHttpClient(s.config.Host, true, s.config.AuthToken)
+
+	log.Info(string(s.TwinDid))
+
+	err := httpClient.UpdateFeed(s.TwinDid, feedID, s.getFeedData())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *{{ .TwinName }}) Create() error {
+	err := s.valid()
+	if err != nil {
+		return err
+	}
+
+	err = s.createTwinDid()
+	if err != nil {
+		return err
+	}
+
+	err = s.createTwin()
+	if err != nil {
+		return err
+	}
+
+	err = s.updateTwin()
+	if err != nil {
+		return err
+	}
+
+
+	{{ range .Feeds}}
+	err = s.createFeed()
+	if err != nil {
+		return err
+	}
+
+	err = s.updateFeed("{{ .FeedID }}")
+	if err != nil {
+		return err
+	}
+	{{ end }}
+	
+	return nil
+}
+
+{{ range .Feeds}}
+
+type {{ .FeedStructName }} struct {
+	config   Config             `json:"-"`
+	stomp    *IoticsStompClient `json:"-"`
+	TwinID   *string            `json:"-"`
+	FeedID   string             `json:"-"`
+	{{ range .FeedValues }}{{ .Label }} {{ .GoDataType }} `json:"{{ .LCaseLabel }}"`
+	{{ end }}
+}
+
+func New{{ .FeedStructName }}(twinID *string, config Config) ({{ .FeedStructName }}, error) {
+	rtn := {{ .FeedStructName }}{
+		config: config,
+		TwinID: twinID,
+		FeedID: "{{ .FeedID }}",
+	}
+
+	ssl := true
+	scheme := "ws"
+	if ssl {
+		scheme = "wss"
+	}
+
+	url := fmt.Sprintf("%s://%s/ws", scheme, config.Host)
+	rtn.stomp = NewIoticsStompClient()
+	err := rtn.stomp.Connect(url, config.AuthToken)
+	if err != nil {
+		return rtn, err
+	}
+	return rtn, nil
+}
+
+func (t *{{ .FeedStructName }}) Publish() error {
+
+	twinId := t.TwinID
+	feedId := t.FeedID
+
+	data, err := json.Marshal(t)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
+	b64Json := base64.StdEncoding.EncodeToString(data)
+	if err != nil {
+		return err
+	}
+
+	log.Info(b64Json)
+
+	data1 := fmt.Sprintf("{\"sample\": {\"data\": \"%s\", \"mime\": \"application/json\", \"occurredAt\": \"%s\"}}", b64Json, time.Now().Format(time.RFC3339Nano))
+	log.Infof("Posting update twinid: %s feedid %s data: %d...\n", *twinId, feedId)
+	err = t.stomp.PostFeedData(*twinId, feedId, data1)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (t *{{ .FeedStructName }}) followerID() string {
+	return "did:iotics:iotHL8fQvyXSm85KwSRmeWNhwr8PcLTGsdLY"
+}
+
+func (t *{{ .FeedStructName }}) Follow(fn onEvent{{ .FeedStructName }}) {
+	////
+	//locs []followLoc, failures chan followLoc, )
+	var failures chan followLoc
+	//var stat *int64
+	loc := followLoc{
+		twinId: *t.TwinID,
+		feedId: t.FeedID,
+	}
+	dest := fmt.Sprintf("/qapi/twins/%s/interests/twins/%s/feeds/%s", t.followerID(), *t.TwinID, t.FeedID)
+
+	ch, err := t.stomp.Subscribe(dest)
+	if err != nil {
+		panic(err)
+	}
+
+	// Read from ch...
+
+	go func(myloc followLoc) {
+		// atomic.AddInt64(stat, 1)
+		// defer atomic.AddInt64(stat, -1)
+
+		for {
+
+			m, ok := <-ch
+
+			if !ok {
+				failures <- myloc
+				return
+			}
+
+			// Get the data...
+			var result map[string]interface{}
+			json.Unmarshal(m.Body, &result)
+
+			// Now find what we want...
+			feedData := result["feedData"].(map[string]interface{})
+			dp := feedData["data"].(string)
+			val, _ := base64.StdEncoding.DecodeString(dp)
+
+			if err := json.Unmarshal(val, &t); err != nil {
+					panic(err)
+			}
+
+
+
+			fn(*t)
+
+		}
+	}(loc)
+}
+
+{{ end }}
+
+type followLoc struct {
+	twinId string
+	feedId string
+}
+
+// IoticsStompClient
+type IoticsStompClient struct {
+	ws            *websocket.Conn
+	stomp         *stomp.Conn
+	lock          sync.Mutex
+	subscriptions map[string]*stomp.Subscription
+
+	clientRef   string
+	clientAppId string
+}
+
+func NewIoticsStompClient() *IoticsStompClient {
+	return &IoticsStompClient{
+		subscriptions: make(map[string]*stomp.Subscription),
+		clientRef:     uuid.NewString(),
+		clientAppId:   uuid.NewString(),
+	}
+}
+
+// Perform a search...
+func (isc *IoticsStompClient) Search(scope string, query string) (string, chan *stomp.Message, error) {
+	uu := uuid.NewString()
+	ch := make(chan *stomp.Message, 1)
+
+	// Subscribe to search results...
+
+	sresults, err := isc.SubscribeWithId("/qapi/searches/results", uu)
+	if err != nil {
+		return "", nil, err
+	}
+
+	fmt.Println("Subbed to search results...")
+
+	// Search result reader and dispatcher...
+	go func() {
+		for {
+			res, ok := <-sresults
+			if !ok {
+				return
+			} else {
+				// Check it's meant for us...
+				if res.Header.Get("Iotics-TransactionRef") == uu {
+					ch <- res
+				}
+			}
+		}
+	}()
+
+	err = isc.stomp.Send("/qapi/searches/dispatches", "", []byte(query),
+		stomp.SendOpt.Header("Iotics-ClientAppId", isc.clientAppId),
+		stomp.SendOpt.Header("Iotics-ClientRef", isc.clientRef),
+		stomp.SendOpt.Header("Iotics-TransactionRef", uu),
+		stomp.SendOpt.Header("scope", scope),
+
+		//		stomp.SendOpt.Header("limit", "100"),
+		//		stomp.SendOpt.Header("offset", "0"),
+	)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return uu, ch, nil
+}
+
+func (isc *IoticsStompClient) PostFeedData(twinId string, feedId string, data string) error {
+	uu := uuid.NewString()
+
+	dest := fmt.Sprintf("/qapi/twins/%s/feeds/%s", twinId, feedId)
+	
+	err := isc.stomp.Send(dest, "", []byte(data),
+		stomp.SendOpt.Header("Iotics-ClientAppId", isc.clientAppId),
+		stomp.SendOpt.Header("Iotics-ClientRef", isc.clientRef),
+		stomp.SendOpt.Header("Iotics-TransactionRef", uu),
+	)
+	return err
+}
+
+// Subscribe subscribes to a topic
+func (isc *IoticsStompClient) Subscribe(dest string) (chan *stomp.Message, error) {
+	uu := uuid.NewString()
+	return isc.SubscribeWithId(dest, uu)
+}
+
+// Subscribe subscribes to a topic
+func (isc *IoticsStompClient) SubscribeWithId(dest string, id string) (chan *stomp.Message, error) {
+
+	subsr, err := isc.stomp.Subscribe(dest, stomp.AckAuto,
+		stomp.SubscribeOpt.Header("Iotics-ClientAppId", isc.clientAppId),
+		stomp.SubscribeOpt.Header("Iotics-ClientRef", isc.clientRef),
+		stomp.SubscribeOpt.Header("Iotics-TransactionRef", id),
+		stomp.SubscribeOpt.Id(id),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store it so we know what's going on...
+	isc.lock.Lock()
+	isc.subscriptions[id] = subsr
+	isc.lock.Unlock()
+
+	ch := make(chan *stomp.Message, 1)
+
+	// Start a reader for it...
+	go func(s *stomp.Subscription) {
+		for {
+			m, err := s.Read()
+			if err == nil {
+				ch <- m
+			} else {
+				// Remove the subscription and quit...
+				isc.lock.Lock()
+				delete(isc.subscriptions, id)
+				isc.lock.Unlock()
+				close(ch)
+				return
+			}
+		}
+	}(subsr)
+
+	return ch, nil
+}
+
+// Close closes the stomp connection
+func (isc *IoticsStompClient) Close() error {
+	err := isc.stomp.Disconnect()
+	if err != nil {
+		return err
+	}
+	err = isc.ws.Close()
+	return err
+}
+
+// Connect connects to a stomp server.
+func (isc *IoticsStompClient) Connect(url string, authToken string) error {
+	origin := "http://localhost"
+
+	ws, err := websocket.Dial(url, "", origin)
+	if err != nil {
+		return err
+	}
+	isc.ws = ws
+
+	stompconn, err := stomp.Connect(isc.ws,
+		stomp.ConnOpt.UseStomp,
+		stomp.ConnOpt.Login("", authToken),
+		stomp.ConnOpt.HeartBeat(1*time.Second, 1*time.Second),
+		stomp.ConnOpt.AcceptVersion(stomp.V11),
+		stomp.ConnOpt.AcceptVersion(stomp.V12),
+		stomp.ConnOpt.Host("dragon"))
+
+	if err != nil {
+		return err
+	}
+	isc.stomp = stompconn
+
+	return nil
+}
+
+type HttpClient struct {
+	useSSL    bool
+	hostname  string
+	proto     string
+	hosturi   string
+	authToken string
+}
+
+func NewHttpClient(hostname string, useSSL bool, authToken string) HttpClient {
+	rtn := HttpClient{}
+	rtn.proto = "http://"
+	if useSSL {
+		rtn.proto = "https://"
+	}
+	rtn.authToken = authToken
+	rtn.hosturi = fmt.Sprintf("%s%s", rtn.proto, hostname)
+	return rtn
+}
+
+func (h *HttpClient) CreateTwin(id string) error {
+	client := &http.Client{}
+
+	type Idvalue struct {
+		Value string `json:"value"`
+	}
+	type twinInfo struct {
+		TwinId Idvalue `json:"twinId"`
+	}
+
+	ti := &twinInfo{
+		TwinId: Idvalue{Value: id},
+	}
+
+	data, err := json.Marshal(ti)
+
+	body := strings.NewReader(string(data))
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/qapi/twins", h.hosturi), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Iotics-ClientAppId", "go-iotics-client")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.authToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	// eg {"twin": {"id": {"value": "did:iotics:iotJw95r16B5xjpc9PXtHt9VvLN2osXMyibN"}, "visibility": "PRIVATE"}, "alreadyCreated": false}
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	log.Infof("Create twin response %s %s\n", resp.Status, string(bodybytes))
+
+	return nil
+}
+
+func (h *HttpClient) CreateFeed(twinID string, feedID string, storeLast bool) error {
+	client := &http.Client{}
+
+	type Idvalue struct {
+		Value string `json:"value"`
+	}
+	type feedInfo struct {
+		FeedId    Idvalue `json:"feedId"`
+		StoreLast bool    `json:"storeLast"`
+	}
+
+	ti := &feedInfo{
+		StoreLast: storeLast,
+		FeedId:    Idvalue{Value: feedID},
+	}
+
+	data, err := json.Marshal(ti)
+
+	body := strings.NewReader(string(data))
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/qapi/twins/%s/feeds", h.hosturi, twinID), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Iotics-ClientAppId", "go-iotics-client")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.authToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	// eg {"twin": {"id": {"value": "did:iotics:iotJw95r16B5xjpc9PXtHt9VvLN2osXMyibN"}, "visibility": "PRIVATE"}, "alreadyCreated": false}
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	log.Infof("Create twin response %s %s\n", resp.Status, string(bodybytes))
+
+	return nil
+}
+
+func (h *HttpClient) UpdateTwin(id string, ti NewTwin) error {
+	client := &http.Client{}
+
+	data, err := json.Marshal(ti)
+
+	body := strings.NewReader(string(data))
+
+	fmt.Println(body)
+
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/qapi/twins/%s", h.hosturi, id), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Iotics-ClientAppId", "go-iotics-client")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.authToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	log.Infof("Update twin response %s %s\n", resp.Status, string(bodybytes))
+
+	return nil
+}
+
+func (h *HttpClient) UpdateFeed(id string, feedID string, feed NewFeed) error {
+	client := &http.Client{}
+
+	data, err := json.Marshal(feed)
+
+	body := strings.NewReader(string(data))
+
+	fmt.Println(body)
+
+	req, err := http.NewRequest("PATCH", fmt.Sprintf("%s/qapi/twins/%s/feeds/%s", h.hosturi, id, feedID), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Iotics-ClientAppId", "go-iotics-client")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.authToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	log.Infof("Update twin response %s %s\n", resp.Status, string(bodybytes))
+
+	return nil
+}
+
+// DescribeTwin on a host
+func (h HttpClient) DescribeTwin(twinID string) (*TwinResp, error) {
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
+
+	res := &TwinResp{}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/qapi/twins/%s", h.hosturi, twinID), nil)
+	if err != nil {
+		return res, err
+	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Iotics-ClientAppId", "twingen")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.authToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.StatusCode != 200 {
+		log.Infof("Stupid server can't cope %s\n", resp.Status)
+		return res, errors.New(fmt.Sprintf("Rest server is giving us error %s", resp.Status))
+	}
+
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return res, err
+	}
+
+	err = json.Unmarshal(bodybytes, &res)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+// DescribeTwin on a host
+func (h HttpClient) DescribeFeed(twinID string, feedID string) (*FeedResp, error) {
+	client := &http.Client{}
+
+	res := &FeedResp{}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/qapi/twins/%s/feeds/%s", h.hosturi, twinID, feedID), nil)
+	if err != nil {
+		return res, err
+	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Iotics-ClientAppId", "twingen")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.authToken))
+	resp, err := client.Do(req)
+	if err != nil {
+		return res, err
+	}
+
+	if resp.StatusCode != 200 {
+		log.Infof("Stupid server can't cope %s\n", resp.Status)
+		return res, errors.New(fmt.Sprintf("Rest server is giving us error %s", resp.Status))
+	}
+
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return res, err
+	}
+
+	err = json.Unmarshal(bodybytes, &res)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+type Did struct {
+	masterBytes  []byte
+	agentKeyName string
+	agentDid     string
+	agentPurpose string
+	twinPurpose  string
+}
+
+func NewDidFromConfig(config Config) (*Did, error) {
+	return NewDid(config.AgentSeed, config.AgentKeyName, config.AgentDid)
+}
+
+func NewDid(seedString string, agentKeyName string, agentDid string) (*Did, error) {
+	method := identity.SeedMethodBip39
+	//method := identity.SeedMethodNone
+
+	seed, err := hex.DecodeString(seedString)
+	if err != nil {
+		return nil, err
+	}
+
+	masterBytes, err := identity.SeedToMaster(seed, "", method)
+	if err != nil {
+		return nil, err
+	}
+	rtn := &Did{
+		masterBytes:  masterBytes,
+		agentDid:     agentDid,
+		agentPurpose: "agent",
+		twinPurpose:  "twin",
+	}
+
+	rtn.agentKeyName = rtn.addHashPrefix(agentKeyName)
+
+	return rtn, nil
+}
+
+func (d *Did) addHashPrefix(input string) string {
+	if !strings.HasPrefix(input, "#") {
+		return "#" + input
+	}
+	return input
+}
+
+func (d *Did) CreateAgentDid(keyname string) ([]byte, error) {
+	if !strings.HasPrefix(keyname, "#") {
+		keyname = "#" + keyname
+	}
+
+	doc, err := d.createDid(d.agentPurpose, keyname)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(doc.ID), nil
+}
+
+func (d *Did) CreateTwinDid(keyname string) ([]byte, error) {
+	log.Info("CreateTwinDid")
+	purpose := "twin"
+
+	if !strings.HasPrefix(keyname, "#") {
+		keyname = "#" + keyname
+	}
+
+	twinDoc, err := d.createDid(purpose, keyname)
+	if err != nil {
+		return nil, err
+	}
+
+	_, privateECDSA := d.getPublicPrivate("twin", keyname)
+
+	number := 0
+	agentPublicECDSA, agentPrivateECDSA := GetPublicPrivate(d.masterBytes, "agent", uint64(number))
+	//agentPublicECDSA, agentPrivateECDSA := d.getPublicPrivate("agent", d.agentKeyName)
+	agentID := d.getIdentifier(agentPublicECDSA)
+
+	proof, err := identity.NewProof(twinDoc.ID, agentPrivateECDSA)
+	if err != nil {
+		log.Printf("Failed to make proof signature")
+		return nil, err
+	}
+
+	deleg := identity.Delegation{
+		ID:         d.agentKeyName,
+		Controller: agentID + d.agentKeyName,
+		Proof:      proof,
+	}
+
+	log.Info(deleg)
+
+	found := false
+	for _, dd := range twinDoc.DelegateControl {
+		if dd.ID == d.agentKeyName {
+			found = true
+			break
+		}
+	}
+	if !found {
+		//delegDoc.DelegateAuthentication = append(delegDoc.DelegateAuthentication, deleg)
+		twinDoc.DelegateControl = append(twinDoc.DelegateControl, deleg)
+	}
+
+	// Register the delegation
+	audience, err := d.getResolverAudience()
+	docClaims := &identity.DIDDocumentClaims{
+		Issuer:       twinDoc.ID + twinDoc.PublicKeys[0].ID,
+		Audience:     audience,
+		Doc:          twinDoc,
+		PrivKeyECDSA: privateECDSA,
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.registerDoc(docClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(twinDoc.ID), nil
+}
+
+// createDid: Attempt to create a DID.  If it exists in the resolver the fetched doc will be returned.
+func (d *Did) createDid(purpose string, keyname string) (*identity.DIDDocument, error) {
+	log.Infof("createDid [%s] [%s]", purpose, keyname)
+	publicECDSA, privateECDSA := d.getPublicPrivate(purpose, keyname)
+	id := d.getIdentifier(publicECDSA)
+
+	dtype, _ := identity.StringToDIDType(purpose)
+	doc, err := identity.NewDIDDocument(dtype, privateECDSA, keyname)
+	if err != nil {
+		return nil, err
+	}
+
+	audience, err := d.getResolverAudience()
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("Audience: %s", audience)
+	issID, err := d.joinIdentifierKeyname(id, keyname)
+	if err != nil {
+		log.Infof("Issuer ID invalid %s %s", issID, err)
+		return nil, err
+	}
+	docClaims := &identity.DIDDocumentClaims{
+		Issuer:       issID,
+		Audience:     audience,
+		Doc:          doc,
+		PrivKeyECDSA: privateECDSA,
+	}
+
+	rslv, _ := identity.NewResolverClient()
+	fetchDoc, err := rslv.Get(id, true)
+	if fetchDoc != nil && err == nil {
+		log.Infof("Document already exists subject %s", id)
+		return fetchDoc, nil
+	}
+
+	err = d.registerDoc(docClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, nil
+}
+
+// GetIdentifier returns DID Identifier from ecdsa publickey
+func (d *Did) getIdentifier(publicECDSA *ecdsa.PublicKey) string {
+	pubKeyBytes := identity.ECDSAPublicToBytes(publicECDSA)
+	return identity.MakeIdentifier(pubKeyBytes)
+}
+
+func (d *Did) getPublicPrivate(purpose string, name string) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
+	privateECDSA, err := identity.NewPrivateKeyECDSAFromPathString(d.masterBytes, purpose, name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicECDSA, err := identity.ECDSAPrivateToPublic(privateECDSA)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return publicECDSA, privateECDSA
+}
+
+func (d *Did) joinIdentifierKeyname(id string, name string) (string, error) {
+	if err := identity.ValidateIdentifier(id); err != nil {
+		return "", err
+	}
+	if len(name) == 0 {
+		return id, nil
+	} else {
+		if !identity.ValidateName(name) {
+			return "", errors.New("Name is not valid")
+		}
+		result := id + name
+		if err := identity.ValidateIdentifier(result); err != nil {
+			return "", err
+		}
+		return result, nil
+	}
+}
+
+func (d *Did) getResolverAudience() (string, error) {
+	addr := ""
+	rslv, err := identity.NewResolverClient()
+	if err != nil {
+		return addr, fmt.Errorf("Failed to setup resolver: %s", err)
+	}
+	addr, err = rslv.GetAddr()
+	if err != nil {
+		return addr, fmt.Errorf("Failed to get resolver address: %s", err)
+	}
+	return addr, nil
+}
+
+func (d *Did) registerDoc(docClaims *identity.DIDDocumentClaims) error {
+	rslv, err := identity.NewResolverClient()
+	if err != nil {
+		log.Fatalf("Failed to setup resolver: %s", err)
+		return err
+	}
+
+	docClaims.Doc.UpdateTime = time.Now().UnixNano() / 1e6 // Unix time millis!
+
+	tkn, err := identity.NewDocumentToken(docClaims)
+	if err != nil {
+		log.Printf("Failed to create document token: %s", err)
+		return err
+	}
+
+	fetch, err := rslv.Get(docClaims.Issuer, true)
+	if fetch != nil && err == nil {
+		log.Printf("Overwriting already existing subject %s", docClaims.Issuer)
+	}
+
+	_, err = identity.VerifyDocument(tkn, true)
+	log.Printf("registerDoc identity.VerifyDocument %v", err)
+
+	return rslv.Register(tkn)
+}
+
+const maxDuration = 60 * 60 * 24
+
+func (d *Did) GetAgentJwt(userDid string, duration string) (string, error) {
+
+	purpose := "agent"
+	audience := "not-currently-used.example.com"
+	issuerID := fmt.Sprintf("%s%s", d.agentDid, d.agentKeyName)
+
+	flagAudience := audience
+	flagSubject := userDid
+	flagIssuer := d.agentDid
+	flagKeyname := d.agentKeyName
+	flagDurationString := duration
+	flagDuration, err := time.ParseDuration(flagDurationString)
+	if err != nil {
+		log.Error(err)
+		return "", err
+	}
+
+	number := 0
+	publicECDSA, privateECDSA := GetPublicPrivate(d.masterBytes, purpose, uint64(number))
+
+	if purpose != "agent" && purpose != "twin" {
+		return "", fmt.Errorf("purpose must be 'agent' or 'twin'")
+	}
+
+	if flagDuration.Seconds() <= 0 || flagDuration.Seconds() > maxDuration {
+		return "", fmt.Errorf("duration must be >0 and <%d", maxDuration)
+	}
+
+	if len(flagAudience) == 0 {
+		return "", fmt.Errorf("audience is required")
+	}
+	if identity.ValidateIdentifier(flagSubject) != nil {
+		return "", fmt.Errorf("subject is required")
+	}
+
+	rslv, err := identity.NewResolverClient()
+	if err != nil {
+		return "", fmt.Errorf("Failed to setup resolver: %s", err)
+	}
+	flagIssuerDoc, err := rslv.Get(flagIssuer, true)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get Issuer %s Document %s", flagIssuer, err)
+	}
+
+	// Check seed+purpose allowed to work on Issuers behalf
+	var issuerKey *identity.IssuerKey
+
+	issuerID, err = d.joinIdentifierKeyname(flagIssuer, flagKeyname)
+	if err != nil {
+		return "", fmt.Errorf("issuer invalid %s %s", issuerID, err)
+	}
+
+	issuerKey, err = identity.FindIssuerByDocument(flagIssuerDoc, issuerID, false, true)
+	if err != nil {
+		return "", fmt.Errorf("%s", err)
+	}
+
+	if !issuerKey.Matches(publicECDSA) {
+		return "", fmt.Errorf("Issuer %s does not match key (seed + purpose + number)", issuerID)
+	}
+
+	// Check issuer allowed to auth as Subject!
+	flagSubjectDoc, err := rslv.Get(flagSubject, true)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get Subject %s Document %s", flagSubject, err)
+	}
+	_, err = identity.FindIssuerByDocument(flagSubjectDoc, issuerID, false, true)
+	if err != nil {
+		return "", fmt.Errorf("%s not allowed to authenticate as %s", issuerID, flagSubject)
+	}
+
+	authReq := &identity.AuthenticationClaims{
+		Issuer:       issuerKey.IssuerID,
+		Subject:      flagSubject,
+		Audience:     flagAudience,
+		Duration:     flagDuration,
+		PrivKeyECDSA: privateECDSA,
+	}
+	tkn, err := identity.NewAuthenticationToken(authReq)
+	if err != nil {
+		log.Fatalf("Unable to make auth token: %s", err)
+	}
+
+	//	log.Printf(tkn)
+	return tkn, nil
+}
+
+func GetPublicPrivate(masterBytes []byte, purpose string, number uint64) (*ecdsa.PublicKey, *ecdsa.PrivateKey) {
+	privateECDSA, err := identity.NewPrivateKeyECDSAFromPath(masterBytes, purpose, number)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	publicECDSA, err := identity.ECDSAPrivateToPublic(privateECDSA)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return publicECDSA, privateECDSA
+}

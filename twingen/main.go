@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 )
 
 const (
-	twin_template = "./templates/test.go.tmpl"
+	twin_template = "./templates/foo.go.tmpl"
 )
 
 type Twinner struct {
@@ -46,7 +47,7 @@ func (t *Twinner) Load() error {
 	var err error
 	t.Twin, err = t.httpClient.DescribeTwin()
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	fmt.Printf("Loaded twin %v\n", t.Twin)
@@ -77,8 +78,155 @@ func (t *Twinner) loadFile(name string) (string, error) {
 	return string(data), nil
 }
 
+type TemplateModel struct {
+	TwinName   string
+	Visibility string
+	Feeds      []FeedTmpl
+	Comments   []CommentsTmpl
+	Properties []PropertiesTmpl
+	Labels     []LabelsTmpl
+	Tags       []string
+}
+type PropertiesTmpl struct {
+	Key   string
+	Value string
+}
+type CommentsTmpl struct {
+	Lang  string
+	Value string
+}
+
+type LabelsTmpl struct {
+	Lang  string
+	Value string
+}
+type FeedTmpl struct {
+	FeedName            string
+	FeedID              string
+	FeedStructName      string
+	FeedStructNameLCase string
+	FeedValues          []FeedValuesTmpl
+	FeedComments        []FeedCommentsTmpl
+	FeedLabels          []FeedLabelsTmpl
+	FeedTags            []string
+}
+
+type FeedCommentsTmpl struct {
+	Lang  string
+	Value string
+}
+
+type FeedLabelsTmpl struct {
+	Lang  string
+	Value string
+}
+type FeedValuesTmpl struct {
+	Label      string
+	Comment    string
+	Unit       string
+	DataType   string
+	GoDataType string
+	LCaseLabel string
+}
+
+func (t *Twinner) GetFeedByName(name string) *FeedResp {
+	for _, v := range t.Feeds {
+		if v.Feed.ID.Value == name {
+			return v
+		}
+	}
+	return nil
+}
+
 // Generate generates the code from template and using the twin data...
 func (t *Twinner) Generate() error {
+
+	c := NewTemplateModel()
+	c.TwinName = strings.Title(t.Twin.Result.Labels[0].Value)
+	c.Visibility = t.Twin.Twin.Visibility
+	c.Feeds = []FeedTmpl{}
+	c.Comments = []CommentsTmpl{}
+	c.Properties = []PropertiesTmpl{}
+	c.Labels = []LabelsTmpl{}
+	c.Tags = []string{}
+	for _, v := range t.Twin.Result.Tags {
+		c.Tags = append(c.Tags, v)
+	}
+	for _, v := range t.Twin.Result.Labels {
+		c.Labels = append(c.Labels, LabelsTmpl{
+			Value: v.Value,
+			Lang:  v.Lang,
+		})
+	}
+	for _, v := range t.Twin.Result.Comments {
+		c.Comments = append(c.Comments, CommentsTmpl{
+			Value: v.Value,
+			Lang:  v.Lang,
+		})
+	}
+	for _, v := range t.Twin.Result.Properties {
+		c.Properties = append(c.Properties, PropertiesTmpl{
+			Value: v.StringLiteralValue.Value,
+			Key:   v.Key,
+		})
+	}
+	for _, v := range t.Twin.Result.Feeds {
+
+		feed := t.GetFeedByName(v.FeedId.Value)
+		fv := []FeedValuesTmpl{}
+		fc := []FeedCommentsTmpl{}
+		fl := []FeedLabelsTmpl{}
+		ft := []string{}
+		for _, v := range feed.Result.Values {
+			i := FeedValuesTmpl{
+				DataType: v.DataType,
+				Comment:  v.Comment,
+				Unit:     v.Unit,
+				Label:    v.Label,
+			}
+			// workout types here
+			i.GoDataType = v.DataType
+			switch v.DataType {
+			case "decimal":
+				i.GoDataType = "float32"
+			case "integer":
+				i.GoDataType = "int"
+			case "string":
+				i.GoDataType = "int"
+			case "boolean":
+				i.GoDataType = "bool"
+			default:
+				i.GoDataType = fmt.Sprintf("not found datatype %s ", v.DataType)
+			}
+			i.LCaseLabel = strings.ToLower(v.Label)
+			fv = append(fv, i)
+		}
+		for _, v := range feed.Result.Comments {
+			fc = append(fc, FeedCommentsTmpl{
+				Lang:  v.Lang,
+				Value: v.Value,
+			})
+		}
+		for _, v := range feed.Result.Labels {
+			fl = append(fl, FeedLabelsTmpl{
+				Lang:  v.Lang,
+				Value: v.Value,
+			})
+		}
+		for _, v := range feed.Result.Tags {
+			ft = append(ft, v)
+		}
+		c.Feeds = append(c.Feeds, FeedTmpl{
+			FeedName:            strings.Title(v.FeedId.Value),
+			FeedID:              v.FeedId.Value,
+			FeedStructName:      fmt.Sprintf("Feed%s", strings.Title(v.FeedId.Value)),
+			FeedStructNameLCase: fmt.Sprintf("Feed%s", strings.ToLower(v.FeedId.Value)),
+			FeedValues:          fv,
+			FeedTags:            ft,
+			FeedComments:        fc,
+			FeedLabels:          fl,
+		})
+	}
 
 	// Load up the template
 	fileContent, err := t.loadFile(twin_template)
@@ -91,8 +239,14 @@ func (t *Twinner) Generate() error {
 		return err
 	}
 
+	f, err := os.Create("/tmp/foo1/main.go")
+	if err != nil {
+		fmt.Println("create file: ", err)
+		return err
+	}
+
 	// Execute the template using Twinner as the data source...
-	err = tem.Execute(os.Stdout, t)
+	err = tem.Execute(f, c)
 	if err != nil {
 		return err
 	}
@@ -101,15 +255,22 @@ func (t *Twinner) Generate() error {
 
 func main() {
 	fmt.Println("Twingen starting...")
-	twinID := "did:iotics:iotCya2zUUN4TGbtp8FHwLPjewsNbJpffHpr"
-	authToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2OTc2NzMsImlhdCI6MTYxOTY4NDA3MywiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.GPu_iFx_GJ1vxkxXxNDey9YPGvnXufLvKJauay-oe6v5wJZ1iVyll-1xVOY99InRr3OSU8AGXj8CFcl1LoMt1w"
+	twinID := "did:iotics:iotTtKdce1CKpUYQPb9AQ2TggDgesKmHD6aF"
+	authToken := "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk3MTE2ODAsImlhdCI6MTYxOTY5ODA4MCwiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.Sqikb8DBVTdXdz_n0MhWSYQUHuMETgDPGScqg3Hja66JmH-vAjiphU0aH_l0Xeeb7j6Xf_G2oFaRYZOUUSdRtQ"
 	httpClient := NewHttpClient("plateng.iotics.space", true, authToken, twinID)
 
 	twinner := NewTwinner(twinID, authToken, &httpClient)
 	fmt.Printf("Loading twin %s...\n", twinID)
-	twinner.Load()
+	err := twinner.Load()
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println("Generating code...")
-	err := twinner.Generate()
+	err = twinner.Generate()
 	fmt.Println(err)
+}
+
+func NewTemplateModel() TemplateModel {
+	return TemplateModel{}
 }

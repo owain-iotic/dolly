@@ -68,10 +68,10 @@ type Feeddata struct {
 }
 
 type Values struct {
-	Label    string
-	Comment  string
-	unit     string
-	dataType string
+	Label    string `json:"label"`
+	Comment  string `json:"comment"`
+	Unit     string `json:"unit"`
+	DataType string `json:"dataType"`
 }
 
 type FeedResult struct {
