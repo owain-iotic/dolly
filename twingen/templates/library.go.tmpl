@@ -24,11 +24,6 @@ import (
 
 type onEvent{{.FeedStructName}} func(feed {{.FeedStructName}}) string
 
-func on{{.FeedStructName}}Event(x {{.FeedStructName}}) string {
-	// insert code here 
-	return ""
-}
-
 {{ end }}
 
 type NewFeed struct {

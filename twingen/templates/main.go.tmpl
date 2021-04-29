@@ -1,0 +1,56 @@
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	fmt.Println("Starting twin {{ .TwinName }}")
+	{{$foo:=.LCaseTwinName}}
+	config := Config{
+		Resolver:     "https://did.prd.iotics.com",
+		AgentSeed:    "4137d728017dd491d26ad48d64c9a24ab4e8c898292957d63acbf87f7a507dab",
+		AgentKeyName: "agent-0",
+		AgentDid:     "did:iotics:iotWDjh2FcRfHxwCj7WB8mn2GCoKabVew999",
+		Host:         "plateng.iotics.space",
+		AuthToken:    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk3MjA4NDksImlhdCI6MTYxOTcwNzI0OSwiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.05QfSrZ2xVWdyZbFKEF8KHxCJIfaR2WoQk_aRq7FhMxPOLmeDLqLi7c2otySaYXr2xZ7GkdjXN6oPc0d3dY-Pg",
+	}
+
+	{{ $foo }}, err := New{{ .TwinName }}(config)
+	if err != nil {
+		panic(err)
+	}
+	{{ $foo }}.TwinName = "soneName"
+
+	{{ $foo }}.Load("did:iotics:iotMBLRg33y6XQwd9pTpNDJxTwX9JMcG7hYb")
+
+	// err = {{ .LCaseTwinName }}.Create()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// ships := host.search()
+
+	{{range .Feeds}}
+	go {{ $foo }}.{{.FeedStructName}}.Follow(on{{.FeedStructName}}Event)
+	
+	{{ end }}
+	
+	for {
+		{{range .Feeds}}
+		// {{ $foo }}.{{.FeedStructName}}.SOMEPARAM = rand.Intn(12)
+		{{ $foo }}.{{.FeedStructName}}.Publish()
+		{{ end }}
+		time.Sleep(1000 * time.Millisecond)
+	}
+
+}
+
+{{range .Feeds}}
+
+func on{{.FeedStructName}}Event(x {{.FeedStructName}}) string {
+	// insert code to response to {{.FeedStructName}}Events  
+	return ""
+}
+
+{{ end }}
