@@ -67,6 +67,58 @@ func onFeedAisEvent(x FeedAis) string {
 	return msg
 }
 
+type Host struct {
+	config Config
+	stomp  *IoticsStompClient
+}
+
+func NewHost(config Config) Host {
+	return Host{
+		config: config,
+	}
+}
+
+func (h *Host) Search() error {
+	ssl := true
+	scheme := "ws"
+	if ssl {
+		scheme = "wss"
+	}
+
+	url := fmt.Sprintf("%s://%s/ws", scheme, h.config.Host)
+
+	h.stomp = NewIoticsStompClient()
+
+	err := h.stomp.Connect(url, h.config.AuthToken)
+	if err != nil {
+		return err
+	}
+
+	query := "{\"filter\": {\"text\": \"tfl-bikes\"}, \"responseType\": \"FULL\"}"
+	id, ch, err := h.stomp.Search("GLOBAL", query)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Search id %s\n", id)
+
+	for {
+		select {
+		case res := <-ch:
+			fmt.Printf("Result: %s\n\n", res.Body)
+
+			twinsResp := &TwinsResp{}
+
+			err = json.Unmarshal(res.Body, &twinsResp)
+
+			fmt.Printf("%v\n", twinsResp)
+			fmt.Printf("%d twins...\n", len(twinsResp.Twins))
+		}
+	}
+
+}
+
 type NewFeed struct {
 	Labels    Labels     `json:"labels"`
 	Comments  Comments   `json:"comments"`
