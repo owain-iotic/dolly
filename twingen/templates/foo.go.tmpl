@@ -21,48 +21,16 @@ import (
 	"github.com/Iotic-Labs/iotic-sdk-identity/sdk/go/identity"
 )
 
-func main() {
-	config := Config{
-		Resolver:     "https://did.prd.iotics.com",
-		AgentSeed:    "4137d728017dd491d26ad48d64c9a24ab4e8c898292957d63acbf87f7a507dab",
-		AgentKeyName: "agent-0",
-		AgentDid:     "did:iotics:iotWDjh2FcRfHxwCj7WB8mn2GCoKabVew999",
-		Host:         "plateng.iotics.space",
-		AuthToken:    "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJub3QtY3VycmVudGx5LXVzZWQuZXhhbXBsZS5jb20iLCJleHAiOjE2MTk2OTc2NzMsImlhdCI6MTYxOTY4NDA3MywiaXNzIjoiZGlkOmlvdGljczppb3RXRGpoMkZjUmZIeHdDajdXQjhtbjJHQ29LYWJWZXc5OTkjYWdlbnQtMCIsInN1YiI6ImRpZDppb3RpY3M6aW90Uml6NmFUeUpCaVJGUkJObWprckthUHBaeHltN0IzUnV0In0.GPu_iFx_GJ1vxkxXxNDey9YPGvnXufLvKJauay-oe6v5wJZ1iVyll-1xVOY99InRr3OSU8AGXj8CFcl1LoMt1w",
-	}
+{{range .Feeds}}
 
-	{{ .TwinName }}, err := New{{ .TwinName }}(config)
-	if err != nil {
-		panic(err)
-	}
-	{{ .TwinName }}.TwinName = "lollypop4"
+type onEvent{{.FeedStructName}} func(feed {{.FeedStructName}}) string
 
-	//{{ .TwinName }}.Load("did:iotics:iotHL8fQvyXSm85KwSRmeWNhwr8PcLTGsdLY")
-
-	err = {{ .TwinName }}.Create()
-	if err != nil {
-		panic(err)
-	}
-	// {{ .TwinName }}s := host.search()
-	// {{ .TwinName }}s := {{ .TwinName }}.Search("some query param")
-	//{{ .TwinName }}.Init(twinid)
-
-	//go {{ .TwinName }}.FeedAis.Follow(onFeedAisEvent)
-
-	for {
-		{{ .TwinName }}.FeedAis.Vallabel = rand.Intn(12)
-		{{ .TwinName }}.FeedAis.Publish()
-		time.Sleep(1000 * time.Millisecond)
-	}
+func on{{.FeedStructName}}Event(x {{.FeedStructName}}) string {
+	// insert code here 
+	return ""
 }
 
-type onEventFeedAis func(feed FeedAis) string
-
-func onFeedAisEvent(x FeedAis) string {
-	msg := fmt.Sprintf("val label %v", x.Vallabel)
-	fmt.Println(msg)
-	return msg
-}
+{{ end }}
 
 type NewFeed struct {
 	Labels    Labels     `json:"labels"`
