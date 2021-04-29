@@ -239,7 +239,7 @@ func (t *Twinner) Generate() error {
 		return err
 	}
 
-	f, err := os.Create("/tmp/foo1/main.go")
+	f, err := os.Create("/tmp/foo1/library.go")
 	if err != nil {
 		fmt.Println("create file: ", err)
 		return err
